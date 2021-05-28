@@ -1,0 +1,14 @@
+programs,allocations,method,filter,prioritize_by,ascending_by,remaining_hours,n_maximum
+SC1A,0.1,hires-nobs=60-counts=ramp,photo_vetting == 'passed' and spec_vetting != 'failed' and spec_vetting != 'do not observe' and ao_vetting != 'failed' and rp > 1.0 and rp < 3.5,actual_cost,TRUE,,-1
+SC1B,0.1,hires-nobs=60-counts=ramp,photo_vetting == 'passed' and spec_vetting != 'failed' and spec_vetting != 'do not observe' and ao_vetting != 'failed' and rp > 1. and rp < 4. and period > 1. and period < 100.,actual_cost,TRUE,,-1
+SC1C,0.1,hires-nobs=60-counts=ramp,photo_vetting == 'passed' and spec_vetting != 'failed' and spec_vetting != 'do not observe' and ao_vetting != 'failed' and sinc > 650. and rp < 8.,actual_cost,TRUE,,-1
+SC1D,0.05,hires-nobs=60-counts=ramp,photo_vetting == 'passed' and spec_vetting != 'failed' and spec_vetting != 'do not observe' and ao_vetting != 'failed' and sinc < 10 and evol == 'MS',actual_cost,TRUE,,-1
+SC1E,0.1,hires-nobs=60-counts=ramp,photo_vetting == 'passed' and spec_vetting != 'failed' and spec_vetting != 'do not observe' and ao_vetting != 'failed' and m_s > 0.08 and m_s < 2.5 and feh > -1. and feh < 1.,actual_cost,TRUE,,-1
+SC2A,0.1,hires-nobs=15-counts=60,select_DG == 1,vmag,TRUE,,50
+SC2Bi,0.1,hires-nobs=60-counts=ramp,photo_vetting == 'passed' and spec_vetting != 'failed' and spec_vetting != 'do not observe' and ao_vetting != 'failed',actual_cost,TRUE,,5
+SC2Bii,0.0,hires-nobs=60-counts=ramp,photo_vetting == 'passed' and spec_vetting != 'failed' and spec_vetting != 'do not observe' and ao_vetting != 'failed',actual_cost,TRUE,,-1
+SC2C,0.1,hires-nobs=100-counts=ramp,photo_vetting == 'passed' and spec_vetting != 'failed' and spec_vetting != 'do not observe' and ao_vetting != 'failed' and npl > 1 and rp < 6,npl|actual_cost,False|True,,4
+SC3,0.1,hires-nobs=60-counts=ramp,photo_vetting == 'passed' and spec_vetting != 'failed' and spec_vetting != 'do not observe' and ao_vetting != 'failed' and (evol == 'MS' or evol == 'SG'),SC3_bin_rank|actual_cost,True|True,,-1
+SC4,0.1,hires-nobs=30-counts=60,photo_vetting == 'passed' and spec_vetting != 'failed' and ao_vetting != 'failed' and (ast_det_t >= 0.5 or ((evol == 'SG' or evol == 'RGB') and disp != 'KP')),actual_cost,TRUE,,-1
+TOA,0.0,hires-nobs=60-counts=ramp,(evol == 'MS' or evol == 'SG' or evol == 'RGB'),actual_cost,TRUE,,-1
+TOB,0.1,hires-nobs=100-counts=ramp,photo_vetting == 'passed' and spec_vetting == 'passed' and ao_vetting != 'failed' and in_other_programs != 0 and disp != 'KP',actual_cost,TRUE,,8

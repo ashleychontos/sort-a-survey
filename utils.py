@@ -6,89 +6,17 @@ from observing import *
 pd.set_option('mode.chained_assignment', None)
 
 
-def Track(object):
-
-    def __init__(self, args, track={}):
-        print('it is being initialized')
-        for n in range(args.mciter):
-            print(n)
-            track[n] = {}
-        self.track = track
-
-
-    def reset_track(self, survey):
-        survey.candidates = survey.df.copy()
-        survey.sciences = survey.programs.copy()
-        self.track[survey.n][0] = {}
-        for pp, hh in zip(survey.sciences.index.values.tolist(), survey.sciences.remaining_hours.values.tolist()):
-            self.track[survey.n][0][pp] = {}
-            self.track[survey.n][0][pp] = round(hh, 3)
-        self.track[survey.n][0]['total_time'] = round(np.sum(survey.sciences.remaining_hours.values.tolist()), 3)
-        self.track = track
-        self.stuck = 0
-        self.stuck_sc1b = 0
-        self.priority = 1
-        self.i = 1
-        return survey
-
-
-    def add_program_pick(self, survey, pick, program):
-        self.track[survey.n][self.i] = {}
-        self.track[survey.n][self.i]['program'] = program
-        self.track[survey.n][self.i]['program_pick'] = survey.sciences.loc[program]['pick_number']+1
-        self.track[survey.n][self.i]['toi'] = float(pick.toi)
-        self.track[survey.n][self.i]['tic'] = int(pick.tic)
-        self.track[survey.n][self.i]['jump'] = pick.cps_name
-
-
-    def update_program_hours(self, survey):
-        for science, hours in zip(survey.sciences.index.values.tolist(), survey.sciences.remaining_hours.values.tolist()):
-            self.track[survey.n][self.i][science] = {}
-            self.track[survey.n][self.i][science] = round(hours, 3)
-        self.track[survey.n][self.i]['total_time'] = round(np.sum(survey.sciences.remaining_hours.values.tolist()), 3)
-
-
-    def update(self, survey, pick, program, stuck):
-        if not stuck:
-            # this makes sure a program has targets left
-            if program == 'SC1B':
-                survey.check_2D_overlap(pick)
-            self.add_program_pick(self, survey, pick, program)
-            survey.sciences.loc[program, "n_targets_left"] -= 1
-            survey.sciences.loc[program, "pick_number"] += 1
-            survey = check_observing(survey, pick, program)
-            if not int(pick.in_other_programs):
-                net = {program:-1.*(float(pick.actual_cost)/3600.)}
-                self.track[survey.n][self.i]['overall_priority'] = self.priority
-                survey.candidates.loc[survey.candidates['tic'] == int(pick.tic), 'priority'] = int(self.priority)
-                self.priority += 1
-            else:
-                net = adjust_costs(survey, pick, program)
-                idx = survey.candidates.loc[survey.candidates['tic'] == int(pick.tic)].index.values.tolist()[0]
-                self.track[survey.n][self.i]['overall_priority'] = int(survey.candidates.loc[idx, 'priority'])
-            for key in net.keys():
-                survey.sciences.loc[key, 'remaining_hours'] += net[key]
-            self.update_program_hours(survey)
-            survey.candidates.loc[survey.candidates['tic'] == int(pick.tic), 'in_'+program] = 1
-            survey.update_targets()
-            self.i += 1
-            survey.stuck = 0
-        else:
-            survey.stuck += 1
-        return survey
-
-
 def pick_program(programs):
-    """Given a set of programs, selects a program randomly based on the proportional
-    time remaining in each program. This is done by creating a cumulative distribution 
-    function (CDF) using all programs "remaining_hours", draws a random number from U~[0,1],
-    which then maps back to the list of programs.
+    """
+    Given a set of programs, selects a program randomly based on the proportional time remaining 
+    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
+    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
+    a random number from U~[0,1), which then maps back to the list of programs.
 
     Parameters
     ----------
     programs : dict
-        programs dict attribute of Survey object. Note: this requires the "remaining_hours"
-        keyword in the programs dict
+        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
 
     Returns
     -------
@@ -106,13 +34,12 @@ def pick_program(programs):
     return program
 
 
-def make_data_products(survey, track):
+def make_data_products(survey):
     if survey.verbose:
-        if not survey.emcee:
-            query = survey.df.query('in_other_programs != 0')
-            query = query.drop_duplicates(subset = 'tic')
-            print('  - %d targets were selected'%len(query))
+        query = survey.df.query('in_other_programs != 0')
+        query = query.drop_duplicates(subset = 'tic')
         print("  - algorithm took %d seconds to run"%(int(survey.ranking_time)))
+        print('  - %d targets were selected'%len(query))
     if survey.save:
         survey = make_directory(survey)
     final = make_final(survey)
@@ -120,11 +47,6 @@ def make_data_products(survey, track):
     observed = assign_priorities(survey)
     costs = final_costs(survey)
     overlap = program_overlap(survey)
-    if survey.save and jump:
-        jump_program(survey)
-        individual_jump_programs(survey)
-    if survey.ranked != {}:
-        emcee_df = emcee_rankings(survey.ranked)
     get_stats(survey, overlap, init_path)
 
 
@@ -132,17 +54,16 @@ def make_directory(survey, i=1):
     if survey.verbose:
         print('  - making data products')
     now = datetime.datetime.now()
-    dir = 'results/' 
     name = now.strftime("%B %d %Y - ")
-    newdir = dir+name+'%d'%i
+    newdir = '%s%s%d'%(survey.outdir,name,i)
     if not os.path.exists(newdir):
         os.makedirs(newdir)
     else:
         while os.path.exists(newdir):
             i += 1
-            newdir = dir+name+'%d'%i
+            newdir = '%s%s%d'%(survey.outdir,name,i)
         os.makedirs(newdir)
-    survey.path = newdir
+    survey.path_save = newdir
     return survey
           
   
@@ -176,9 +97,9 @@ def make_final(survey):
         lefttime = get_hires_time(df_temp, method)
         survey.df.loc[i, "rem_time"] = round(lefttime/3600.,3)
     if survey.save:
-        survey.df.to_csv(survey.path+'/TOIs_perfect_final.csv', index=False)
+        survey.df.to_csv(survey.path_save+'/TOIs_perfect_final.csv', index=False)
         if survey.verbose:
-            print('  - copy of updated TOI spreadsheet saved to %s'%(survey.path+'/TOIs_perfect_final.csv'))
+            print('  - copy of updated TOI spreadsheet saved to %s'%(survey.path_save+'/TOIs_perfect_final.csv'))
     final = survey.df.copy()
     return final
 
@@ -217,9 +138,9 @@ def make_ranking_steps(track):
     names[0] = ' '
     df['jump'] = np.array(names)
     if survey.save:
-        df.to_csv(survey.path+'/ranking_steps.csv')
+        df.to_csv('%s/ranking_steps.csv'%survey.path_save)
         if survey.verbose:
-            print('  - ranking steps of the algorithm have been saved to %s'%(survey.path+'/ranking_steps.csv'))
+            print('  - ranking steps of the algorithm have been saved to %s/ranking_steps.csv'%survey.path_save)
     ranking_steps = df.copy()
     return ranking_steps
     
@@ -239,48 +160,12 @@ def assign_priorities(survey, obs={}, m=1):
     observed.reset_index(inplace = True)
     observed = observed.rename(columns = {'index':'overall_priority'})
     if survey.save:
-        observed.to_csv(survey.path+'/observing_priorities.csv', index = False)
+        observed.to_csv('%s/observing_priorities.csv'%survey.path_save, index = False)
         if survey.verbose:
-            print('  - final prioritized list saved to %s'%(survey.path+'/observing_priorities.csv'))
+            print('  - final prioritized list saved to %s/observing_priorities.csv'%survey.path_save)
     return observed
 
-
-def jump_program(survey):
-    df = pd.read_csv('info/TOIs_perfect.csv')
-    df.query('finish == True', inplace=True)
-    other = df.cps_name.values.tolist()
-    tois = df.toi.values.tolist()
-    for n in range(len(other)):
-        if other[n] == '-':
-            other[n] = 'T%06d'%tois[n]
-    names = survey.observed.jump.values.tolist()
-    names += other
-    targets = sorted(names)
-    f = open(survey.path+'/tks_prioritization.txt', "w")
-    for target in sorted(targets):
-        f.write(target+'\n')
-    f.close()
-    if survey.verbose:
-        print('  - TKS - Prioritization saved to %s'%(survey.path+'/tks_prioritization.txt'))
-
-
-def individual_jump_programs(survey):
-    maps = get_columns('jump')
-    for science in survey.programs.index.values.tolist():
-        if science == 'TOA':
-            targets = survey.observed.jump.values.tolist()
-        else:
-            filter = survey.overlap.query("in_%s == 'X'"%science)
-            targets = filter.jump.values.tolist()
-        program = sorted(targets)
-        f = open(survey.path+'/%s'%maps[science], "w")
-        for each in program:
-            f.write(each+'\n')
-        f.close()
-    if survey.verbose:
-        print('  - Individual jump programs have been made for each science case')
         
-
 def final_costs(survey, costs={}):
     tics = survey.final.tic.values.tolist()
     for i, tic in enumerate(survey.observed.tic.values.tolist()):
