@@ -2,10 +2,12 @@
 
    <br />
 
-sort-a-survey: |br| automated & reproducible target selection
-=============================================================
+sort-a-survey: |br| an automated target selection |br| algorithm for large collaborations
+=========================================================================================
 
-For all your automated and reproducible target selection needs.
+This work was motivated by the TESS-Keck Survey, a very large program between researchers
+at Caltech, the University of California, the Univerity of Hawai'i, the University of Kansas,
+NASA, the NASA Exoplanet Science Institute, and the W. M. Keck Observatory.
 
 Code contributions are welcome and should be submitted as a pull request.
 

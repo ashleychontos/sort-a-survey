@@ -1,18 +1,23 @@
-#!/usr/local/bin/python3
-
+import subprocess
 import numpy as np
 import pandas as pd
 import time as clock
 pd.set_option('mode.chained_assignment', None)
 
 
-import sortasurvey
-from sortasurvey import utils
-from sortasurvey.survey import Survey
-from sortasurvey.sample import Sample
+#import sortasurvey
+#from sortasurvey import utils
+#from sortasurvey.survey import Survey
+#from sortasurvey.sample import Sample
+#from sortasurvey import INPDIR, OUTDIR
+
+import pipeline
+
+INPDIR = os.path.join(_ROOT, 'info')
+OUTDIR = os.path.join(_ROOT, 'results')
 
 
-def main(args, stuck=0):
+def run(args, stuck=0):
 
     # init Survey class
     survey = Survey(args)
@@ -52,3 +57,40 @@ def main(args, stuck=0):
     tf = clock.time()
     survey.ranking_time = float(tf-ti)
     utils.make_data_products(survey)
+
+
+def setup(args, note='', source='https://raw.githubusercontent.com/ashleychontos/sort-a-survey/main/info/'):
+    """
+    Running this after installation will create the appropriate directories in the current working
+    directory as well as download example files to test your installation.
+
+    Parameters
+    ----------
+    args : argparse.Namespace
+        the command line arguments
+    note : Optional[str]
+        suppressed verbose output
+    source : Optional[str]
+        source directory to download example files to test your installation
+
+    """
+
+    note+='\n\nDownloading relevant data from source directory:\n'
+    # create info directory
+    if not os.path.exists(args.inpdir):
+        os.mkdir(args.inpdir)
+        note+=' - created input file directory: %s \n'%args.inpdir
+
+    # get example TKS input files
+    for file in ['TOIs_perfect.csv', 'high_priority.csv', 'no_no.csv', 'survey_info.csv']:
+        infile='%s%s'%(source,file)
+        outfile='%s%s'%(args.inpdir,file)
+        subprocess.call(['curl %s > %s'%(infile, outfile)], shell=True)
+
+    # create results directory
+    if not os.path.exists(args.outdir):
+        os.mkdir(args.outdir)
+    note+=' - results will be saved to %s \n\n'%args.outdir
+    
+    if args.verbose:
+        print(note)

@@ -42,18 +42,18 @@ def cost_function(df, method, include_archival=True, overhead=2.*60, lower=3.*60
             rem_nobs = 0
             rem_time = 0.
         else:
-            rem_time = exp*rem_nobs+overtime*rem_nobs
+            rem_time = exp*rem_nobs+overhead*rem_nobs
         # if a template has not been acquired for a target yet
         if not df['template']:
             exp = exposure_time(df['vmag'], 250., iodine=False)
             exp = np.clip(exp, 3.*60, 45.*60)
-            rem_time += (exp+overtime)
+            rem_time += (exp+overhead)
     else:
         # if not including archival data, consider the time to acquire a template
         rem_time = exp*nobs+overtime*nobs
         exp = exposure_time(df['vmag'], 250., iodine=False)
         exp = np.clip(exp, 3.*60, 45.*60)
-        rem_time += (exp+overtime)
+        rem_time += (exp+overhead)
     return rem_time
 
 
@@ -102,7 +102,7 @@ def exposure_counts(vmag, exptime, **kwargs):
     Returns
     -------
     counts : float
-        expected number of counts (per seconds)
+        expected number of photon counts (x1000)
 
     """
 
@@ -132,8 +132,8 @@ def exp_ramp(vmag, v1=10.5, v2=12.0, c1=250., c2=60.):
 
     Returns
     -------
-     : float
-        exposure meter setting (k)
+    counts : float
+        expected number of photon counts (x1000)
 
     """
 
@@ -144,9 +144,9 @@ def exp_ramp(vmag, v1=10.5, v2=12.0, c1=250., c2=60.):
         return c2
 
     exp_level = np.interp(vmag, xp=[v1, v2], fp=[np.log10(c1), np.log10(c2)])
-    expcounts = 10.**exp_level
+    counts = 10.**exp_level
 
-    return expcounts
+    return counts
 
    
 
@@ -166,8 +166,8 @@ def get_actual_costs(program, programs, query):
     
     Returns
     -------
-    rem_time : float
-        the remaining time (in seconds) needed to achieve your specified science.
+    query : pandas.DataFrame
+        the relevant vetted sample updated with actual target costs
 
     """
     actual_costs=[]
@@ -201,13 +201,18 @@ def adjust_costs(survey, pick, program):
         survey programs (via survey.sciences)
     pick : pandas.DataFrame
         a single row dataframe containing information on the selected program's current pick
-    program: str
+    program : str
         the selected program
+    cases : List[str]
+        other programs that have selected a given target in past iterations
+    costs : List[float]
+        the cost of a target given a specific program's observing strategy
     
     Returns
     -------
-    net : dict
-        programs to credit/debit, including the amount to credit/debit each program by
+    net : Dict[str,float]
+        a python dictionary whose keys are other programs to credit or debit back, pointing
+        to the amount of time to credit or debit the program back
 
     """
     cases=[]

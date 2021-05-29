@@ -1,3 +1,5 @@
+import os
+import glob
 import numpy as np
 import pandas as pd
 
@@ -14,19 +16,22 @@ class Sample:
 
     Attributes
     ----------
-    init_path : str
-        path to vetted sample (defaults = 'info/TOIs_perfect.csv')
     df : pandas.DataFrame
-        vetted sample from survey class object, if survey is not `None`
+        vetted sample from the survey.Survey
     programs : pandas.DataFrame
-        survey programs if survey is not `None`
+        survey programs from the survey.Survey 
 
     Parameters
     ----------
+    survey : Optional[survey.Survey]
+        will save the science programs and vetted sample of a given survey to the
+        Sample.programs and Sample.df attributes, respectively if not `None`.
+    path_init : Optional[str]
+        path to vetted sample (default = 'info/TOIs_perfect.csv')
+    path_final : Optional[str]
+        root path to results (default = `None`)
     program : str
         selected program of interest within a survey
-    path_final : str
-        path to the output file containing the selected sample
     
 
     """
@@ -46,12 +51,17 @@ class Sample:
         available for target selection but filters the sample to address a specific science 
         case's (or program) needs. 
 
+        Attributes
+        ----------
         program : str
-            which program to filter the sample on ** Note: program must match original
-            science case key (e.g. SC1B -> "in_%s"%program, where the latter is generated
-            during the initial target selection process)
+            the program used to filter the selected Sample
+        query : pandas.DataFrame
+            the original vetted survey sample filtered on the specific program's selection criteria
 
-        returns : pd.DataFrame
+        Parameters
+        ----------
+        drop_dup : Optional[bool]
+            option to drop duplicate targets in the sample query, since the target will only be observed once. As a result, the default is `True`.
 
         """
         if not hasattr(self, 'df'):
@@ -74,6 +84,23 @@ class Sample:
         
 
     def get_highest_priority(self):
+        """
+        Returns the highest priority target for a selected program that has not
+        yet been selected by that program.
+
+        Attributes
+        ----------
+        program : str
+            the program used to filter the selected Sample
+        query : pandas.DataFrame
+            the original vetted survey sample filtered on the specific program's selection criteria
+
+        Returns
+        -------
+        pick : pandas.DataFrame
+            the selected's program's highest priority pick
+
+        """
         for i in self.query.index.values.tolist():
             if not int(self.query.loc[i,'in_%s'%self.program]):
                 pick = self.query.loc[i]
@@ -81,14 +108,20 @@ class Sample:
         return pick
 
 
-    def _get_vetted_sample(self):
+    def get_vetted_sample(self):
         """
         Loads the vetted sample that was available during the survey selection process.
         Using the final csv path, it selects the sample from the most recent output directory.
 
-        input : 
+        Parameters
+        ----------
+        final_path : Optional[str]
+            path of output csv file to read in
 
-        returns : pd.DataFrame
+        Returns
+        -------
+        df : pandas.DataFrame
+            the full vetted sample used for the target selection
 
         """
         list_of_files = glob.glob(self.final_path)
@@ -97,38 +130,49 @@ class Sample:
         return df
 
 
-    def _get_selected_sample(self):
+    def get_selected_sample(self, final_path=None):
         """
-        Loads the final sample selected from the target prioritization process. Using the 
-        final csv path (final_path), it selects the sample from the most recent output 
-        directory and stores it to a pandas DataFrame. The df is queried for targets that 
-        were selected by at least one program ("in_other_programs != 0").
+        Loads the final sample selected from the target prioritization process. If 
+        no path is provided, it will automatically load in the most recent output.
 
-        input : 
+        Parameters
+        ----------
+        final_path : Optional[str]
+            path of output csv file to read in
 
-        returns : pd.DataFrame
+        Returns
+        -------
+        df : pandas.DataFrame
+            the sample selected by the algorithm for a given Survey 
 
         """
-        list_of_files = glob.glob(self.final_path)
-        latest_file = max(list_of_files, key=os.path.getctime)
+        if final_path is None:
+            list_of_files = glob.glob(self.final_path)
+            latest_file = max(list_of_files, key=os.path.getctime)
+        else:
+            latest_file = final_path
         df = pd.read_csv(latest_file)
         df.query("in_other_programs != 0", inplace=True)
         return df
 
-    def _get_science_sample(self, program):
+
+    def get_science_sample(self, program, path_final=None):
         """
         Loads the final sample selected from the target prioritization process for a 
-        specific science case (or program). Using the final csv path (final_path), it 
-        selects the sample from the most recent output directory and stores it to a 
-        pandas DataFrame. The df is queried for targets that were selected by the
-        specific program ("in_program == 1").
+        specific science case or program from the Survey. If no path is provided, it
+        will automatically load in the most recent output.
 
+        Parameters
+        ----------
         program : str
-            which program to filter the sample on ** Note: program must match original
-            science case key (e.g. SC1B -> "in_%s"%program, where the latter is generated
-            during the initial target selection process)
+            specific Survey program to downselect the sample for
+        path_final : Optional[str]
+            path of output csv file to read in
 
-        returns : pd.DataFrame
+        Returns
+        -------
+        df : pandas.DataFrame
+            the sample selected by the algorithm for a specific Survey program
 
         """
         list_of_files = glob.glob(self.final_path)
