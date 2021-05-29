@@ -2,8 +2,10 @@ import os
 import datetime
 import numpy as np
 import pandas as pd
-from observing import *
 pd.set_option('mode.chained_assignment', None)
+
+
+from sortasurvey import observing
 
 
 def pick_program(programs):

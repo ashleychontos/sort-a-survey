@@ -8,4 +8,4 @@ from .utils import *
 
 __all__ = ['cli', 'observing', 'pipeline', 'sample', 'survey', 'utils']
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
