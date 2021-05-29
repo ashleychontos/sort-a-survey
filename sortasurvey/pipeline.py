@@ -1,3 +1,4 @@
+import os
 import subprocess
 import numpy as np
 import pandas as pd
@@ -5,19 +6,13 @@ import time as clock
 pd.set_option('mode.chained_assignment', None)
 
 
-#import sortasurvey
-#from sortasurvey import utils
-#from sortasurvey.survey import Survey
-#from sortasurvey.sample import Sample
-#from sortasurvey import INPDIR, OUTDIR
-
-import pipeline
-
-INPDIR = os.path.join(_ROOT, 'info')
-OUTDIR = os.path.join(_ROOT, 'results')
+import sortasurvey
+from sortasurvey import utils
+from sortasurvey.survey import Survey
+from sortasurvey.sample import Sample
 
 
-def run(args, stuck=0):
+def rank(args, stuck=0):
 
     # init Survey class
     survey = Survey(args)
@@ -53,9 +48,13 @@ def run(args, stuck=0):
                 survey.update(pick, program)
             if stuck >= len(survey.sciences):
                 break
+        if survey.emcee:
+            survey.df = survey.candidates.copy()
+            utils.make_data_products(survey)
 
     tf = clock.time()
     survey.ranking_time = float(tf-ti)
+    survey.df = survey.candidates.copy()
     utils.make_data_products(survey)
 
 

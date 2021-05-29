@@ -7,7 +7,6 @@ pd.set_option('mode.chained_assignment', None)
 from sortasurvey import observing
 
 
-
 class Survey:
     """
     Loads in survey information and the vetted survey sample.
@@ -51,12 +50,16 @@ class Survey:
         for n in np.arange(1,self.iter+1):
             self.track[n] = {}
         if self.verbose:
-            print('\n -- prioritization starting --\n\n   - loading TOIs and science program information')
+            print('\n -- prioritization starting --\n\n   - loading sample and survey science information')
         self.get_sample(args)
         self.get_programs(args)
         self.get_seeds()
-        if self.verbose and self.progress and self.iter > 1:
-            self.pbar = tqdm(total=self.iter)
+        if self.iter > 1:
+            self.emcee = True
+            if self.verbose and self.progress:
+                self.pbar = tqdm(total=self.iter)
+        else:
+            self.emcee = False
 
 
     def get_sample(self, args, dec=-30., ruwe=2.):
@@ -70,6 +73,7 @@ class Survey:
         df = pd.read_csv(args.path_survey, comment="#")
         self.programs = df.programs.values.tolist()
         sample = pd.read_csv(args.path_sample)
+        self.path_sample = args.path_sample
         self.sample = sample.query("dec > %f and ruwe < %f"%(dec, ruwe))
         self.remove_bad()
         self.add_columns()
@@ -92,7 +96,7 @@ class Survey:
         self.sample.query("finish == False", inplace=True)
     
 
-    def add_columns(self, cols=["npl","in_other_programs","n_select"]):
+    def add_columns(self, cols=["npl","select_DG","in_other_programs","n_select"]):
         """
         Adds in additional columns that might be relevant for the target selection.
 
@@ -116,9 +120,9 @@ class Survey:
         self.passed_tks = len(query)
         self.passed_vet = len(new_query)
         if self.verbose:
-            print('   - %d TOIs are observable per TKS standards and have promising dispositions'%self.passed_tks)
-            print('   - %d of these have also passed photometric & spectroscopic vetting'%self.passed_vet)
-            print('   - ranking scheme initialized')
+            print('   - %d targets make the standard survey cuts'%self.passed_tks)
+            print('   - %d have also passed various vetting steps'%self.passed_vet)
+            print('   - ranking algorithm initialized')
 
 
     def get_programs(self, args):
@@ -487,7 +491,7 @@ class Survey:
             self.candidates.loc[self.candidates['tic'] == int(pick.tic),'priority'] = int(self.priority)
             self.priority += 1
         else:
-            net = adjust_costs(self, pick, program)
+            net = observing.adjust_costs(self, pick, program)
             idx = self.candidates.loc[self.candidates['tic'] == int(pick.tic)].index.values.tolist()[0]
             self.track[self.n][self.i]['overall_priority'] = int(self.candidates.loc[idx,'priority'])
         for key in net.keys():

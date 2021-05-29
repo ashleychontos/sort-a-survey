@@ -147,7 +147,7 @@ class Sample:
 
         """
         if final_path is None:
-            list_of_files = glob.glob(self.final_path)
+            list_of_files = glob.glob('results/other/*/*/TOIs_perfect_final.csv')
             latest_file = max(list_of_files, key=os.path.getctime)
         else:
             latest_file = final_path

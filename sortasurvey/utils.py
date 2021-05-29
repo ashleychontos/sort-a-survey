@@ -54,19 +54,24 @@ def make_data_products(survey):
         the selected program which comes directly from the input programs dict keys
 
     """
-    if survey.verbose:
+    if survey.verbose and not survey.emcee:
         query = survey.df.query('in_other_programs != 0')
         query = query.drop_duplicates(subset = 'tic')
-        print("  - algorithm took %d seconds to run"%(int(survey.ranking_time)))
-        print('  - %d targets were selected'%len(query))
+        print("   - algorithm took %d seconds to run"%(int(survey.ranking_time)))
+        print('   - %d targets were selected'%len(query))
     if survey.save:
-        survey = make_directory(survey)
-    final = make_final(survey)
-    ranking_steps = make_ranking_steps(survey.track)
-    observed = assign_priorities(survey)
-    costs = final_costs(survey)
-    overlap = program_overlap(survey)
-    get_stats(survey, overlap, init_path)
+        if not survey.emcee:
+            survey = make_directory(survey)
+        else:
+            if survey.n == 1:
+                survey = make_directory(survey)
+            os.makedirs('%s/%d/'%(survey.path_save,survey.n))
+    survey = make_final(survey)
+    survey = make_ranking_steps(survey)
+    survey = assign_priorities(survey)
+#    survey = final_costs(survey)
+    survey = program_overlap(survey)
+    get_stats(survey)
 
 
 def make_directory(survey, i=1):
@@ -87,17 +92,17 @@ def make_directory(survey, i=1):
         the selected program which comes directly from the input programs dict keys
 
     """
-    if survey.verbose:
-        print('  - making data products')
+    if survey.verbose and not survey.emcee:
+        print('   - making data products')
     now = datetime.datetime.now()
-    name = now.strftime("%B %d %Y - ")
-    newdir = '%s%s%d'%(survey.outdir,name,i)
+    name = now.strftime("%m-%d-%y")
+    newdir = '%s/%s-%d'%(survey.outdir,name,i)
     if not os.path.exists(newdir):
         os.makedirs(newdir)
     else:
         while os.path.exists(newdir):
             i += 1
-            newdir = '%s%s%d'%(survey.outdir,name,i)
+            newdir = '%s/%s-%d'%(survey.outdir,name,i)
         os.makedirs(newdir)
     survey.path_save = newdir
     return survey
@@ -127,7 +132,7 @@ def make_final(survey):
         df_temp = changes.loc[i]
         nobs_goal = int(float((method.split('-')[1]).split('=')[-1]))
         survey.df.loc[i, "nobs_goal"] = nobs_goal
-        tottime = observing.cost_function(df_temp, method, include=False)
+        tottime = observing.cost_function(df_temp, method, include_archival=False)
         survey.df.loc[i, "tot_time"] = round(tottime/3600.,3)
         remaining_nobs = int(nobs_goal - survey.df.loc[i, "nobs"])
         if remaining_nobs < 0:
@@ -141,7 +146,7 @@ def make_final(survey):
         df_temp = changes.loc[i]
         nobs_goal = int(float((method.split('-')[1]).split('=')[-1]))
         survey.df.loc[i, "nobs_goal"] = nobs_goal
-        tottime = observing.cost_function(df_temp, method, include=False)
+        tottime = observing.cost_function(df_temp, method, include_archival=False)
         survey.df.loc[i, "tot_time"] = round(tottime/3600.,3)
         remaining_nobs = int(nobs_goal - survey.df.loc[i, "nobs"])
         if remaining_nobs < 0:
@@ -150,11 +155,14 @@ def make_final(survey):
         lefttime = observing.cost_function(df_temp, method)
         survey.df.loc[i, "rem_time"] = round(lefttime/3600.,3)
     if survey.save:
-        survey.df.to_csv('%s/TOIs_perfect_final.csv'%survey.path_save, index=False)
-        if survey.verbose:
-            print('  - copy of updated TOI spreadsheet saved to %s'%survey.path_save)
-    final = survey.df.copy()
-    return final
+        if survey.emcee:
+            survey.df.to_csv('%s/%d/TOIs_perfect_final.csv'%(survey.path_save, survey.n), index=False)
+        else:
+            survey.df.to_csv('%s/TOIs_perfect_final.csv'%survey.path_save, index=False)
+        if survey.verbose and not survey.emcee:
+            print('   - copy of updated TOI spreadsheet saved to %s'%survey.path_save)
+    survey.final = survey.df.copy()
+    return survey
       
   
 def make_ranking_steps(survey):
@@ -175,17 +183,20 @@ def make_ranking_steps(survey):
         the selected program which comes directly from the input programs dict keys
 
     """
-    track = pd.DataFrame.from_dict(survey.track, orient='index')
-    reorder = get_columns('track')
+    reorder = get_columns('track', survey)
+    track = pd.DataFrame.from_dict(survey.track[survey.n], orient='index')
     df = pd.DataFrame(columns = reorder)
     for column in reorder:
         df[column] = track[column]
     if survey.save:
-        df.to_csv('%s/ranking_steps.csv'%survey.path_save)
-        if survey.verbose:
-            print('  - ranking steps of the algorithm have been saved to %s/ranking_steps.csv'%survey.path_save)
-    ranking_steps = df.copy()
-    return ranking_steps
+        if survey.emcee:
+            df.to_csv('%s/%d/ranking_steps.csv'%(survey.path_save,survey.n))
+        else:
+            df.to_csv('%s/ranking_steps.csv'%survey.path_save)
+        if survey.verbose and not survey.emcee:
+            print('   - ranking steps of the algorithm have been saved to %s/ranking_steps.csv'%survey.path_save)
+    survey.ranking_steps = df.copy()
+    return survey
     
     
 def assign_priorities(survey, obs={}, m=1):
@@ -213,17 +224,20 @@ def assign_priorities(survey, obs={}, m=1):
             obs[m] = {}
             obs[m]['tic'] = int(prior.tic.values.tolist()[0])
             obs[m]['toi'] = int(np.floor(prior.toi.values.tolist()[0]))
-            obs[m]['jump'] = prior.jump.values.tolist()[0]
             obs[m]['programs'] = prior.program.values.tolist()
             m += 1
-    observed = pd.DataFrame.from_dict(obs, orient = 'index')
+    observed = pd.DataFrame.from_dict(obs, orient='index')
     observed.reset_index(inplace = True)
     observed = observed.rename(columns = {'index':'overall_priority'})
     if survey.save:
-        observed.to_csv('%s/observing_priorities.csv'%survey.path_save, index = False)
-        if survey.verbose:
-            print('  - final prioritized list saved to %s/observing_priorities.csv'%survey.path_save)
-    return observed
+        if survey.emcee:
+            observed.to_csv('%s/%d/observing_priorities.csv'%(survey.path_save,survey.n))
+        else:
+            observed.to_csv('%s/observing_priorities.csv'%survey.path_save, index = False)
+        if survey.verbose and not survey.emcee:
+            print('   - final prioritized list saved to %s/observing_priorities.csv'%survey.path_save)
+    survey.observed = observed.copy()
+    return survey
 
         
 def final_costs(survey, costs={}):
@@ -251,7 +265,6 @@ def final_costs(survey, costs={}):
         costs[i]['priority'] = i+1
         costs[i]['toi'] = str(int(np.floor(survey.observed.loc[i, "toi"])))
         costs[i]['tic'] = str(int(tic))
-        costs[i]['jump'] = survey.observed.loc[i, "jump"]
         idx = tics.index(tic)
         nobs_goal = int(survey.final.loc[idx, "nobs_goal"])
         costs[i]['nobs_goal'] = str(nobs_goal)
@@ -266,18 +279,18 @@ def final_costs(survey, costs={}):
             costs[i][science] = round(((max(frac)/3600.)*f),3)
         costs[i]['charged_time'] = round((max(frac)/3600.),3)
         if nobs_goal == 60 or nobs_goal == 100:
-            total_cost = observing.cost_function(survey.final.loc[idx], 'hires-nobs=%d-counts=ramp'%nobs_goal, include=False)
+            total_cost = observing.cost_function(survey.final.loc[idx], 'hires-nobs=%d-counts=ramp'%nobs_goal, include_archival=False)
         else:
-            total_cost = observing.cost_function(survey.final.loc[idx], 'hires-nobs=%d-counts=60'%nobs_goal, include=False)
+            total_cost = observing.cost_function(survey.final.loc[idx], 'hires-nobs=%d-counts=60'%nobs_goal, include_archival=False)
         costs[i]['total_time'] = round(total_cost/3600.,3)
     costs = pd.DataFrame.from_dict(costs, orient = 'index')
-    reorder = get_columns('costs')
+    reorder = get_columns('costs', survey)
     df = pd.DataFrame(columns = reorder)
     for column in reorder:
         df[column] = costs[column]
     idx = len(df)
     total = df.sum(axis=0)
-    df.loc[idx,'jump'] = 'Totals:'
+    df.loc[idx,'tic'] = 'Totals:'
     for science in survey.programs.index.values.tolist():
         df.loc[idx,science] = round(total[science],3)
     df.loc[idx,'charged_time'] = round(total['charged_time'],3)
@@ -285,11 +298,14 @@ def final_costs(survey, costs={}):
     survey.charged_time = float(total['charged_time'])
     survey.total_time = float(total['total_time'])
     if survey.save:
-        df.to_csv('%s/total_costs.csv'%survey.path_save, index=False)
-        if survey.verbose:
-            print('  - final costs saved to %s/total_costs.csv'%survey.path_save)
-    costs = df.copy()
-    return costs
+        if survey.emcee:
+            df.to_csv('%s/%d/total_costs.csv'%(survey.path_save,survey.n), index=False)
+        else:
+            df.to_csv('%s/total_costs.csv'%survey.path_save, index=False)
+        if survey.verbose and not survey.emcee:
+            print('   - final costs saved to %s/total_costs.csv'%survey.path_save)
+    survey.costs = df.copy()
+    return survey
         
 
 def program_overlap(survey):
@@ -310,14 +326,12 @@ def program_overlap(survey):
         the selected program which comes directly from the input programs dict keys
 
     """
-    names = ['tic', 'toi', 'jump', 'priority']
-    cols = ['in_'+program for program in survey.programs.index.values.tolist()]
-    df = pd.DataFrame(columns = names+cols+['total_programs'], index = survey.observed.index.values.tolist())
+    columns = get_columns('overlap', survey)
+    df = pd.DataFrame(columns = columns, index = survey.observed.index.values.tolist())
     for i in survey.observed.index.values.tolist():
         df_temp = survey.observed.loc[i]
         df.loc[i, 'tic'] = df_temp['tic']
         df.loc[i, 'toi'] = df_temp['toi']
-        df.loc[i, 'jump'] = df_temp['jump']
         df.loc[i, 'priority'] = df_temp['overall_priority']
         for program in survey.programs.index.values.tolist():
             if program in df_temp['programs']:
@@ -326,11 +340,14 @@ def program_overlap(survey):
                 df.loc[i, 'in_'+program] = '-'
         df.loc[i, 'total_programs'] = len(df_temp['programs'])
     if survey.save:
-        df.to_csv('%s/program_overlap.csv'%survey.path_save, index = False)
-        if survey.verbose:
-            print('  - spreadsheet containing program overlap saved to %s/program_overlap.csvs'%survey.path_save)
-    overlap = df.copy()
-    return overlap
+        if survey.emcee:
+            df.to_csv('%s/%d/program_overlap.csv'%(survey.path_save,survey.n))
+        else:
+            df.to_csv('%s/program_overlap.csv'%survey.path_save, index = False)
+        if survey.verbose and not survey.emcee:
+            print('   - spreadsheet containing program overlap saved to %s/program_overlap.csvs'%survey.path_save)
+    survey.overlap = df.copy()
+    return survey
 
 
 def emcee_rankings(ranked):
@@ -351,7 +368,7 @@ def emcee_rankings(ranked):
         the selected program which comes directly from the input programs dict keys
 
     """
-    columns = get_columns('emcee')
+    columns = get_columns('emcee', survey)
     selected = pd.DataFrame.from_dict(ranked, orient='index', columns=columns)
     for i in selected.index.values.tolist():
         prior = np.array(ranked[i]['priority'])
@@ -372,12 +389,12 @@ def emcee_rankings(ranked):
         df.loc[i, "other_programs"] = total
     df.to_csv('%s/TOIs_perfect_mc.csv'%survey.path_save)
     if survey.verbose:
-        print('  - spreadsheet containing MC information saved to %s/TOIs_perfect_mc.csv'%survey.path_save)
+        print('   - spreadsheet containing MC information saved to %s/TOIs_perfect_mc.csv'%survey.path_save)
     emcee_df = df.copy()
     return emcee_df
           
   
-def get_stats(survey, overlap, init_path, note='', finish=False):
+def get_stats(survey, note='', finish=False):
     """
     Given a set of programs, selects a program randomly based on the proportional time remaining 
     for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
@@ -395,36 +412,41 @@ def get_stats(survey, overlap, init_path, note='', finish=False):
         the selected program which comes directly from the input programs dict keys
 
     """
-    df = pd.read_csv(survey.path_toi)
     if finish:
+        df = pd.read_csv(survey.path_sample)
         df.query('finish == True', inplace=True)
-    n_finish = len(df)
+        n_finish = len(df)
+    df = survey.overlap.copy()
     time = datetime.datetime.now()
     note += time.strftime("%a %m/%d/%y %I:%M%p") + '\n'
-    note += 'Seed no: %d\n'%survey.seed
-    note += 'Out of the %d total targets:\n'%len(overlap)
+    note += 'Seed no: %d\n'%survey.seeds[survey.n-1]
+    note += 'Out of the %d total targets:\n'%len(df)
     for science in survey.programs.index.values.tolist():
         if science == 'TOA':
-            note += ' - %s has %d targets\n'%(science, len(df))
+            note += '  - %s has %d targets\n'%(science, len(df))
         else:
             a = df['in_'+science].values.tolist()
             d = {x:a.count(x) for x in a}
             try:
-                note += ' - %s has %d targets\n'%(science, d['X'])
+                note += '  - %s has %d targets\n'%(science, d['X'])
             except KeyError:
-                note += ' - %s has %d targets\n'%(science, 0)
-    f = open('%s/run_info.txt'%survey.path_save, "w")
-    f.write(note)
-    f.close()
-    if survey.verbose:
-        print('  - txt file containing run information saved to %s/run_info.txt'%survey.path_save)
-        print('')
-        print('--- process complete ---')
-        print('')
-        print(note)
+                note += '  - %s has %d targets\n'%(science, 0)
+    if survey.save:
+        if survey.emcee:
+            f = open('%s/%d/run_info.txt'%(survey.path_save,survey.n), "w")
+        else:
+            f = open('%s/run_info.txt'%survey.path_save, "w")
+        f.write(note)
+        f.close()
+        if survey.verbose and not survey.emcee:
+            print('   - txt file containing run information saved to %s/run_info.txt'%survey.path_save)
+            print('')
+            print(' --- process complete ---')
+            print('')
+            print(note)
 
 
-def get_columns(type):
+def get_columns(type, survey):
     """
     Given a set of programs, selects a program randomly based on the proportional time remaining 
     for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
@@ -443,11 +465,11 @@ def get_columns(type):
 
     """
     if type == 'track':
-        reorder = ['program', 'program_pick', 'overall_priority', 'tic', 'toi', 'jump', 'SC1A', 'SC1B', 'SC1C', 
-                   'SC1D', 'SC1E', 'SC2A', 'SC2Bi', 'SC2Bii', 'SC2C', 'SC3', 'SC4', 'TOA', 'TOB', 'total_time']
+        columns = ['program', 'program_pick', 'overall_priority', 'tic', 'toi'] + survey.sciences.name.values.tolist() + ['total_time']
     elif type == 'costs':
-        reorder = ['priority', 'tic', 'toi', 'jump', 'SC1A', 'SC1B', 'SC1C', 'SC1D', 'SC1E', 'SC2A', 'SC2Bi', 
-                   'SC2Bii', 'SC2C', 'SC3', 'SC4', 'TOA', 'TOB', 'nobs_goal', 'charged_time', 'total_time']
+        columns = ['priority', 'tic', 'toi'] + survey.sciences.name.values.tolist() + ['nobs_goal', 'charged_time', 'total_time']
+    elif type == 'overlap':
+        columns = ['tic', 'toi', 'priority'] + ['in_%s'%program for program in survey.programs.index.values.tolist()] + ['total_programs']
     else:
-        pass
-    return reorder
+        columns = []
+    return columns

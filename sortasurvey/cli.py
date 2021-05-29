@@ -6,23 +6,23 @@ import argparse
 #from sortasurvey import INPDIR, OUTDIR
 
 import pipeline
+import os
 
+_ROOT = os.path.abspath(os.getcwd())
 INPDIR = os.path.join(_ROOT, 'info')
 OUTDIR = os.path.join(_ROOT, 'results')
 
-print(INPDIR)
-print(OUTDIR)
 
 def main():
     parser = argparse.ArgumentParser(
                                      description="sort-a-survey: automated, optimizable and reproducible target selection",
                                      prog="sort-a-survey",
     )
-    parser.add_argument('-version', '--version',
-                        action='version',
-                        version="%(prog)s {}".format(sortasurvey.__version__),
-                        help="Print version number and exit."
-    )
+#    parser.add_argument('-version', '--version',
+#                        action='version',
+#                        version="%(prog)s {}".format(sortasurvey.__version__),
+#                        help="Print version number and exit."
+#    )
 
     # In the parent parser, we define arguments and options common to all subcommands
     parent_parser = argparse.ArgumentParser(add_help=False)
@@ -78,7 +78,7 @@ def main():
 
     # Running pySYD in regular mode
 
-    parser_run = sub_parser.add_parser('run', help='Run target selection algorithm', 
+    parser_run = sub_parser.add_parser('rank', help='Rank targets for the survey', 
                                        parents=[parent_parser])
     parser_run.add_argument('-iter', '--iter', '-step', '--step', '-iterations', '--iterations', '-steps', '--steps', 
                             dest='iter', 
@@ -124,7 +124,7 @@ def main():
                             default=None,
     )
 
-    parser_run.set_defaults(func=pipeline.run)
+    parser_run.set_defaults(func=pipeline.rank)
 
     args = parser.parse_args()
     args.func(args)

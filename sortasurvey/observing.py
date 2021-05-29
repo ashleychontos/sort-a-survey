@@ -50,7 +50,7 @@ def cost_function(df, method, include_archival=True, overhead=2.*60, lower=3.*60
             rem_time += (exp+overhead)
     else:
         # if not including archival data, consider the time to acquire a template
-        rem_time = exp*nobs+overtime*nobs
+        rem_time = exp*nobs+overhead*nobs
         exp = exposure_time(df['vmag'], 250., iodine=False)
         exp = np.clip(exp, 3.*60, 45.*60)
         rem_time += (exp+overhead)
