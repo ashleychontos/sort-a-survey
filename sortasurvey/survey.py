@@ -4,8 +4,9 @@ from tqdm import tqdm
 pd.set_option('mode.chained_assignment', None)
 
 
-from utils import *
-from observing import adjust_costs
+from sortasurvey import observing
+
+
 
 class Survey:
     """
@@ -479,7 +480,7 @@ class Survey:
         self.add_program_pick(pick, program)
         self.sciences.loc[program,'n_targets_left'] -= 1
         self.sciences.loc[program,'pick_number'] += 1
-        self = check_observing(self, pick, program)
+        self = observing.check_observing(self, pick, program)
         if not int(pick.in_other_programs):
             net = {program:-1.*(float(pick.actual_cost)/3600.)}
             self.track[self.n][self.i]['overall_priority'] = self.priority

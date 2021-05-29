@@ -3,4 +3,5 @@ pandas>=0.20.0
 nbsphinx
 sphinx_rtd_theme
 asteroid_sphinx_theme
+scipy
 tqdm

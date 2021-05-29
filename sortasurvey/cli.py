@@ -1,5 +1,9 @@
 import argparse
-import pipeline
+
+
+import sortasurvey
+from sortasurvey import pipeline
+
 
 def main():
 

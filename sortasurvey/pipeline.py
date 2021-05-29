@@ -6,9 +6,10 @@ import time as clock
 pd.set_option('mode.chained_assignment', None)
 
 
-from survey import Survey
-from sample import Sample
-import utils
+import sortasurvey
+from sortasurvey import utils
+from sortasurvey.survey import Survey
+from sortasurvey.sample import Sample
 
 
 def main(args, stuck=0):

@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-import observing
+
+from sortasurvey import observing
 
 
 class Sample:
