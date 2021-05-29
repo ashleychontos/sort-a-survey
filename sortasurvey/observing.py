@@ -42,7 +42,7 @@ def cost_function(df, method, include_archival=True, overhead=2.*60, lower=3.*60
             rem_nobs = 0
             rem_time = 0.
         else:
-            rem_time = exp*rem_nobs+overtime*rem_nobs]
+            rem_time = exp*rem_nobs+overtime*rem_nobs
         # if a template has not been acquired for a target yet
         if not df['template']:
             exp = exposure_time(df['vmag'], 250., iodine=False)
