@@ -11,6 +11,8 @@ The work presented here was motivated by the TESS-Keck Survey (TKS), a large, de
 over 100 nights on Keck/HIRES to study transiting planets identified by the [NASA TESS](https://tess.mit.edu) mission. 
 TKS is a collaboration between researchers at the California Institute of Technology, the University of California, the
 University of Hawai'i, the University of Kansas, NASA, the NASA Exoplanet Science Institute and the W. M. Keck Observatory.
+Please visit [this](https://github.com/ashleychontos/tess-keck-survey) repo for more specific details on the application of
+this algorithm to the final TKS sample.
 
 ## Attribution
 
