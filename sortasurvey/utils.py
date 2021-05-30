@@ -38,58 +38,63 @@ def pick_program(programs):
 
 def make_data_products(survey):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    After target selection process is complete, information is saved to several csvs.
+    All information is stored as attributes to the Survey class but running this function
+    synthesizes all the relevant information into easier-to-read files.
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
+    survey : survey.Survey
+        updated Survey class object containing algorithm selections
 
-    Returns
-    -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
+
 
     """
-    if survey.verbose and not survey.emcee:
-        query = survey.df.query('in_other_programs != 0')
-        query = query.drop_duplicates(subset = 'tic')
-        print("   - algorithm took %d seconds to run"%(int(survey.ranking_time)))
-        print('   - %d targets were selected'%len(query))
+    if survey.emcee:
+        if survey.verbose and survey.progress:
+            survey.pbar.update(1)
+        if survey.n == survey.iter:
+            if survey.verbose:
+                print("   - %d MC steps completed"%(int(survey.n)))
+                print("   - algorithm took %d seconds to run"%(int(survey.ranking_time)))
+    else:
+        if survey.verbose:
+            query = survey.df.query('in_other_programs != 0')
+            query = query.drop_duplicates(subset = 'tic')
+            print("   - algorithm took %d seconds to run"%(int(survey.ranking_time)))
+            print('   - %d targets were selected'%len(query))
+
     if survey.save:
         if not survey.emcee:
             survey = make_directory(survey)
         else:
             if survey.n == 1:
                 survey = make_directory(survey)
-            os.makedirs('%s/%d/'%(survey.path_save,survey.n))
-    survey = make_final(survey)
-    survey = make_ranking_steps(survey)
-    survey = assign_priorities(survey)
+            if not os.path.exists('%s/%d/'%(survey.path_save,survey.n)):
+                os.makedirs('%s/%d/'%(survey.path_save,survey.n))
+            else:
+                return
+        survey = make_final(survey)
+        survey = make_ranking_steps(survey)
+        survey = assign_priorities(survey)
 #    survey = final_costs(survey)
-    survey = program_overlap(survey)
-    get_stats(survey)
+        survey = program_overlap(survey)
+        get_stats(survey)
 
 
 def make_directory(survey, i=1):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    Makes a directory for the output files
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
+    survey : survey.Survey
+        updated Survey class object containing algorithm selections
 
     Returns
     -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
+    survey : survey.Survey
+        updated Survey class object with the new 'path_save' attribute
 
     """
     if survey.verbose and not survey.emcee:
@@ -110,20 +115,17 @@ def make_directory(survey, i=1):
   
 def make_final(survey):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    Makes a directory for the output files
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
+    survey : survey.Survey
+        updated Survey class object containing algorithm selections
 
     Returns
     -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
+    survey : survey.Survey
+        updated Survey class object with the new 'path_save' attribute
 
     """
     changes = survey.df.query('in_SC2A == 1 and in_other_programs == 1')
@@ -160,30 +162,29 @@ def make_final(survey):
         else:
             survey.df.to_csv('%s/TOIs_perfect_final.csv'%survey.path_save, index=False)
         if survey.verbose and not survey.emcee:
-            print('   - copy of updated TOI spreadsheet saved to %s'%survey.path_save)
+            print('   - copy of updated sample information saved'%survey.path_save)
     survey.final = survey.df.copy()
     return survey
       
   
 def make_ranking_steps(survey):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    Saves every step of the target selection process, referred to as the 'track'
+    (and is actually the attribute it is saved as in the Survey). This is saved
+    as 'ranking_steps.csv' to the current run's 'path_save' directory.
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
+    survey : survey.Survey
+        Survey class object containing algorithm selections
 
     Returns
     -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
+    survey : survey.Survey
+        updated Survey class object with the new 'ranking_steps' attribute
 
     """
-    reorder = get_columns('track', survey)
+    reorder = get_columns('track', survey.sciences.name.values.tolist())
     track = pd.DataFrame.from_dict(survey.track[survey.n], orient='index')
     df = pd.DataFrame(columns = reorder)
     for column in reorder:
@@ -194,27 +195,28 @@ def make_ranking_steps(survey):
         else:
             df.to_csv('%s/ranking_steps.csv'%survey.path_save)
         if survey.verbose and not survey.emcee:
-            print('   - ranking steps of the algorithm have been saved to %s/ranking_steps.csv'%survey.path_save)
+            print('   - algorithm history saved as ranking steps'%survey.path_save)
     survey.ranking_steps = df.copy()
     return survey
     
     
 def assign_priorities(survey, obs={}, m=1):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    In summary, this transforms the ranking steps into a final prioritized list.
+    This module takes all information from a single algorithm iteration i.e. a 
+    complete survey selection process from start to finish and synthesizes it into 
+    a single prioritized target list, including all programs that selected a
+    given target and the final overall target priorities.
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
+    survey : survey.Survey
+        Survey class object containing the 'ranking_steps' history
 
     Returns
     -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
+    survey : survey.Survey
+        updated Survey class object with the newly prioritized 'observed' list
 
     """
     track_sorted = survey.ranking_steps.sort_values(by = ['overall_priority'])
@@ -235,27 +237,27 @@ def assign_priorities(survey, obs={}, m=1):
         else:
             observed.to_csv('%s/observing_priorities.csv'%survey.path_save, index = False)
         if survey.verbose and not survey.emcee:
-            print('   - final prioritized list saved to %s/observing_priorities.csv'%survey.path_save)
+            print('   - final prioritized list saved'%survey.path_save)
     survey.observed = observed.copy()
     return survey
 
         
 def final_costs(survey, costs={}):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    Computes the individual costs of all selected targets for a program, 
+    which incorporates both existing archival data and shared costs. Think
+    of this as an itemized receipt for all targets and all programs in a
+    survey.
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
+    survey : survey.Survey
+        Survey class object containing the final prioritized 'observed' list
 
     Returns
     -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
+    survey : survey.Survey
+        updated Survey class object containing the final costs of all selected targets per program
 
     """
     tics = survey.final.tic.values.tolist()
@@ -284,7 +286,7 @@ def final_costs(survey, costs={}):
             total_cost = observing.cost_function(survey.final.loc[idx], 'hires-nobs=%d-counts=60'%nobs_goal, include_archival=False)
         costs[i]['total_time'] = round(total_cost/3600.,3)
     costs = pd.DataFrame.from_dict(costs, orient = 'index')
-    reorder = get_columns('costs', survey)
+    reorder = get_columns('costs', survey.sciences.name.values.tolist())
     df = pd.DataFrame(columns = reorder)
     for column in reorder:
         df[column] = costs[column]
@@ -303,30 +305,28 @@ def final_costs(survey, costs={}):
         else:
             df.to_csv('%s/total_costs.csv'%survey.path_save, index=False)
         if survey.verbose and not survey.emcee:
-            print('   - final costs saved to %s/total_costs.csv'%survey.path_save)
+            print('   - final costs saved')
     survey.costs = df.copy()
     return survey
         
 
 def program_overlap(survey):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    From the final selected list, this is a simple csv that shows 
+    the overlap of survey targets and programs
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
+    survey : survey.Survey
+        Survey class object containing the final prioritized 'observed' list
 
     Returns
     -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
+    survey : survey.Survey
+        updated Survey with the overlap of targets and programs
 
     """
-    columns = get_columns('overlap', survey)
+    columns = get_columns('overlap', survey.sciences.name.values.tolist())
     df = pd.DataFrame(columns = columns, index = survey.observed.index.values.tolist())
     for i in survey.observed.index.values.tolist():
         df_temp = survey.observed.loc[i]
@@ -345,30 +345,28 @@ def program_overlap(survey):
         else:
             df.to_csv('%s/program_overlap.csv'%survey.path_save, index = False)
         if survey.verbose and not survey.emcee:
-            print('   - spreadsheet containing program overlap saved to %s/program_overlap.csvs'%survey.path_save)
+            print('   - program overlap csv saved')
     survey.overlap = df.copy()
     return survey
 
 
-def emcee_rankings(ranked):
+def emcee_rankings(survey):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    TODO: synthesizes the selected lists across all MC iterations and counts
+    the number of times a target was selected (per number of iterations)
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
+    survey : survey.Survey
+        Survey class object containing the final prioritized 'observed' list
 
     Returns
     -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
+    survey : survey.Survey
+        updated Survey with the overlap of targets and programs
 
     """
-    columns = get_columns('emcee', survey)
+    columns = get_columns('emcee', survey.sciences.name.values.tolist())
     selected = pd.DataFrame.from_dict(ranked, orient='index', columns=columns)
     for i in selected.index.values.tolist():
         prior = np.array(ranked[i]['priority'])
@@ -396,20 +394,18 @@ def emcee_rankings(ranked):
   
 def get_stats(survey, note='', finish=False):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    Logs information from the run necessary to reproduce the sample,
+    i.e. seed number, any special science cases, any ignored science 
+    cases, etc.
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
-
-    Returns
-    -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
+    survey : survey.Survey
+        Survey class object containing the final prioritized 'observed' list
+    note : str
+        logs all relevant information and will save this as a basic text file
+    finish : bool
+        todo
 
     """
     if finish:
@@ -439,24 +435,23 @@ def get_stats(survey, note='', finish=False):
         f.write(note)
         f.close()
         if survey.verbose and not survey.emcee:
-            print('   - txt file containing run information saved to %s/run_info.txt'%survey.path_save)
+            print('   - txt file containing run information saved')
             print('')
             print(' --- process complete ---')
             print('')
             print(note)
 
 
-def get_columns(type, survey):
+def get_columns(type, sciences):
     """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
+    Get the relevant columns for different output files.
 
     Parameters
     ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
+    type : str
+        which output file the columns are needed for, options are ['track', 'costs', 'overlap']
+    sciences : List[str]
+        the list of programs in the survey
 
     Returns
     -------
@@ -465,11 +460,11 @@ def get_columns(type, survey):
 
     """
     if type == 'track':
-        columns = ['program', 'program_pick', 'overall_priority', 'tic', 'toi'] + survey.sciences.name.values.tolist() + ['total_time']
+        columns = ['program', 'program_pick', 'overall_priority', 'tic', 'toi'] + sciences + ['total_time']
     elif type == 'costs':
-        columns = ['priority', 'tic', 'toi'] + survey.sciences.name.values.tolist() + ['nobs_goal', 'charged_time', 'total_time']
+        columns = ['priority', 'tic', 'toi'] + sciences + ['nobs_goal', 'charged_time', 'total_time']
     elif type == 'overlap':
-        columns = ['tic', 'toi', 'priority'] + ['in_%s'%program for program in survey.programs.index.values.tolist()] + ['total_programs']
+        columns = ['tic', 'toi', 'priority'] + ['in_%s'%program for program in sciences] + ['total_programs']
     else:
         columns = []
     return columns

@@ -12,7 +12,7 @@ class Sample:
     Creates a filtered sample based on the provided survey program. The most common 
     use of the sample is during the target selection process, which calls the 
     get_highest_priority method at each iteration. All other methods are useful 
-    for post-target selection filtering, shown in the provided Jupyter notebook example.
+    for post-target selection filtering, shown in the provided Jupyter notebook example (TODO).
 
     Attributes
     ----------

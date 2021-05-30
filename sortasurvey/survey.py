@@ -19,21 +19,29 @@ class Survey:
     Attributes
     ----------
     verbose : bool
-        verbose output
-    iter : int
-        number of selection process iterations. Default is `1` (via args.iter).
-    step : int
-        iteration number
-    programs : pandas.DataFrame
-        pandas dataframe containing survey information
-    sciences : pandas.DataFrame
-        copy of the 'programs' pandas dataframe
+        verbose output (default is `True`)
+    save : bool
+        save output (default is `True`)
+    outdir : str
+        path to save output files
+    progress : bool
+        show progress bar of selection process (this will only work with the verbose output on)
     sample : pandas.DataFrame
-        pandas dataframe containing the sample to select targets from
+        pandas dataframe containing the sample to select targets from  -> this is not updated, this is preserved
     candidates : pandas.DataFrame
-        copy of the 'sample' pandas dataframe
+        copy of the vetted survey sample dataframe -> this is updated during the selection process
+    programs : pandas.DataFrame
+        pandas dataframe containing survey information -> this is not updated, this is preserved
+    sciences : pandas.DataFrame
+        copy of the survey programs dataframe -> this is updated during the selection process
     track : dict
         logs each iteration of the target selection
+    iter : int
+        number of selection process iterations. Default is `1` (via args.iter).
+    n : int
+        iteration number
+    emcee : bool
+        `True` if iter > 1 but `False` by default.
 
     """
     
@@ -64,10 +72,19 @@ class Survey:
 
     def get_sample(self, args, dec=-30., ruwe=2.):
         """
-        Fixes the sample based on specific survey needs.
-        For TKS as a whole, this only required that the target
-        is observable (dec > -30.) and possessed a reasonable
-        Gaia RUWE metric (ruwe < 2.).
+        Fixes the sample based on specific survey needs. Broadly for TKS, 
+        this only required that the target is observable (dec > -30.) and 
+        possessed a reasonable Gaia RUWE metric (ruwe < 2., where higher
+        values typically indicate unresolved binaries).
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            command line arguments
+        dec : float
+            lowest possible declination for targets to observe with Keck HIRES
+        ruwe : float
+            astrometric Gaia RUWE (renormalized unit weight error) metric
 
         """
         df = pd.read_csv(args.path_survey, comment="#")
@@ -80,7 +97,6 @@ class Survey:
         # science-case-specific metrics
         self.get_sc3_info()
         self.get_counts()
-        self.candidates = self.sample.copy()
         
 
     def remove_bad(self, disp=['FP','EB','NEB','BEB','SV','BD','NPC','SB1','SB2','FA']):
@@ -88,6 +104,11 @@ class Survey:
         Removes unfavorable targets from the survey. In this case, this includes false 
         alarms and/or false positives, including nearby/blended eclipsing binaries as well
         as spectroscopic false positives (e.g., SB1, SB2).
+
+        Parameters
+        ----------
+        disp : List[str]
+            a list of unfavorable dispositions to ignore for the target selection process
 
         """
         for bad in disp:
@@ -127,7 +148,21 @@ class Survey:
 
     def get_programs(self, args):
         """
-        Get the survey programs from the provided csv (via args.path_survey)
+        Stores all relevant information for every program in the survey.
+        This is initially loaded in via args.path_survey but also loads in
+        any high priority targets and/or targets to ignore. 
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            command line arguments
+
+        Attributes
+        ----------
+        programs : pandas.DataFrame
+            **very important** dataframe containing all survey program information
+        special : Dict[str,List[str]]
+            dictionary for survey programs that require a more complicated selection process
 
         """
 
@@ -176,7 +211,6 @@ class Survey:
         programs = pd.DataFrame.from_dict(programs, orient='index', columns=['name','method','filter','prioritize_by','ascending_by','remaining_hours','n_maximum','total_time','high_priority','n_targets_left','pick_number'])
         programs.to_csv('%s_copy.%s'%(args.path_survey.split('.')[0],args.path_survey.split('.')[-1]))
         self.programs = programs.copy()
-        self.sciences = self.programs.copy()
         if args.special is not None:
             self.get_special(args)
         else:
@@ -188,6 +222,16 @@ class Survey:
         Get any special science programs that require a more complicated selection process.
         For TKS, SC1B uses a 2D selection process and needs to update the filter at each selection
         step.
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            command line arguments (via args.special)
+
+        Attributes
+        ----------
+        special : Dict[str,List[str]]
+            dictionary for survey programs with more complicated selection processes
 
         """
         for program in args.special:
@@ -204,9 +248,7 @@ class Survey:
     # science-case-specific functions
     def get_sc3_info(self, include_qlp=True, mask=None):
         """
-        Get any special science programs that require a more complicated selection process.
-        For TKS, SC1B uses a 2D selection process and needs to update the filter at each selection
-        step.
+        TODO
 
         """
         if not include_qlp:
@@ -231,9 +273,12 @@ class Survey:
 
     def calculate_TSM(self, mask=None):
         """
-        Get any special science programs that require a more complicated selection process.
-        For TKS, SC1B uses a 2D selection process and needs to update the filter at each selection
-        step.
+        Calculate the transmission spectroscopy metric (TSM) for all targets
+        in the survey.sample
+
+        Parameters
+        ----------
+        mask : bool
 
         """
         self.sample['TSM'] = [np.nan]*len(self.sample)
@@ -260,9 +305,7 @@ class Survey:
 
     def sc3_binning_function(self, df, bins, sort_val='TSM', num_to_rank=5):
         """
-        Get any special science programs that require a more complicated selection process.
-        For TKS, SC1B uses a 2D selection process and needs to update the filter at each selection
-        step.
+        TODO
 
         """
         pre_bin = df.assign(
@@ -296,13 +339,17 @@ class Survey:
 
     def init_2D_filters(self, program):
         """
-        Sets up filters for a more complicated selection criteria.
-        This is relevant for SC1B, exploring the possible connection 
-        between stellar flux and gaseous envelopes. To study this
-        effect, the goal is to randomly but uniformly sample in
-        place radius vs. incident flux space. This is done by setting
-        up equal bin sizes in linear(rp)-log(sinc) parameter space 
-        for a total of nbins=12.
+        Sets up filters for a more sophisticated sampling procedure.
+        SC1B of TKS is exploring the possible connection between stellar 
+        flux and gaseous envelopes. To study this effect, the goal is to 
+        randomly but uniformly sample in planet radius vs. incident flux 
+        space. This is done by using 12 equal bin sizes in linear(rp)-log(sinc) 
+        parameter space for a total of nbins=12.
+
+        Parameters
+        ----------
+        program : str
+            the selected program
 
         """
         count=0
@@ -338,7 +385,14 @@ class Survey:
     def get_2D_filter(self, program):
         """
         This procedure is called for science cases that wish to uniformly 
-        and randomly sample over a 2-dimensional space. 
+        and randomly sample over a 2-dimensional space. An example is SC1B
+        from the TESS-Keck Survey, which requires an additional step to
+        select a filters from the list of filters.
+
+        Parameters
+        ----------
+        program : str
+            the selected program
 
         """
         pick_number = self.special[program]['pick_number']
@@ -373,8 +427,13 @@ class Survey:
 
     def reset_2D_filters(self, program):
         """
-        When all bins have been used, they need to be reset (which includes)
-        randomizing the bin order selection.
+        Once all 2D bins (i.e. filters) have been used for a given program, 
+        they need to be reset, which includes randomizing the bin order selection.
+
+        Parameters
+        ----------
+        program : str
+            the selected program
 
         """
         choices = self.special[program]['choices']
@@ -389,8 +448,15 @@ class Survey:
     def check_2D_overlap(self, pick, program):
         """
         Multi-planet systems (i.e. the same observed target) can fall into more than
-        one bin so this needs to be checked at each step, as ewll as the number of 
-        available targets per bin.
+        one bin so this needs to be checked at each step, as well as the number of 
+        available targets per bin. This also resets the special 'stuck' counter.
+
+        Parameters
+        ----------
+        pick : pandas.DataFrame
+            the newly selected target
+        program : str
+            the selected program
 
         """
         choices = self.special[program]['choices']
@@ -402,20 +468,13 @@ class Survey:
         self.sciences.loc[program, 'n_targets_left'] = np.sum(choices.targets_left.values.tolist())+1
         self.special[program]['choices'] = choices.copy()
         self.special[program]['stuck'] = 0
-
-
-    def update_targets(self):
-        start = np.array([0]*len(self.candidates))
-        for science in self.sciences.index.values.tolist():
-            start += self.candidates['in_%s'%science].values.tolist()
-        self.candidates['in_other_programs'] = start
  
 
     def reset_track(self):
         """
-        Get any special science programs that require a more complicated selection process.
-        For TKS, SC1B uses a 2D selection process and needs to update the filter at each selection
-        step.
+        For MC iterations > 1, this module resets all the required information 
+        back to initial starting conditions, primarily a new survey.track to log
+        the new selection process to.
 
         """
         self.reset_programs()
@@ -426,15 +485,12 @@ class Survey:
         self.priority = 1
         self.i = 1
         np.random.seed(self.seeds[self.n-1])
-        if self.verbose and self.progress and self.iter > 1 and self.n != 1:
-            self.pbar.update(1)
 
 
     def reset_programs(self):
         """
-        Get any special science programs that require a more complicated selection process.
-        For TKS, SC1B uses a 2D selection process and needs to update the filter at each selection
-        step.
+        For MC iterations > 1, this is used to reset both the starting sample
+        and initial program information (e.g., allocation, etc.).
 
         """
         # make copies of the original dataframes, thus resetting the information
@@ -448,35 +504,23 @@ class Survey:
                 self.special[program]['choices'] = choices
 
 
-    def add_program_pick(self, pick, program):
-        """
-        Get any special science programs that require a more complicated selection process.
-        For TKS, SC1B uses a 2D selection process and needs to update the filter at each selection
-        step.
-
-        """
-        self.track[self.n][self.i] = {}
-        self.track[self.n][self.i]['program'] = program
-        self.track[self.n][self.i]['program_pick'] = self.sciences.loc[program,'pick_number']+1
-        self.track[self.n][self.i]['toi'] = float(pick.toi)
-        self.track[self.n][self.i]['tic'] = int(pick.tic)
-
-
-    def update_program_hours(self):
-        """
-        Get any special science programs that require a more complicated selection process.
-        For TKS, SC1B uses a 2D selection process and needs to update the filter at each selection
-        step.
-
-        """
-        for program, hours in zip(self.sciences.index.values.tolist(), self.sciences.remaining_hours.values.tolist()):
-            self.track[self.n][self.i][program] = round(hours,3)
-        self.track[self.n][self.i]['total_time'] = round(np.sum(self.sciences.remaining_hours.values.tolist()),3)
-
-
     def update(self, pick, program):
         """
-        Update appropriate information and tables.
+        Updates appropriate information and tables with new program selection. This module
+        operates in roughly the following order:
+
+        1)  adds the program and the program pick to the survey.track 
+        2)  reduces the available number of targets left in a program by 1
+        2b) there is an additional 'special' step for programs using a 2D selection process, 
+            which calls self.check_2D_overlap(pick, program) to see if the target had additional
+            planets that fell in other bins, so as to not double-count a target (the primary 
+            role for this step is to make sure the special science case(s) still have targets 
+            to select from)
+        3)  checks if the target has been selected by other programs and if `True`, credits the
+            appropriate programs back the difference in cost
+        4)  after crediting/debiting all relevant programs, the remaining hours in all programs
+            in the survey is logged in the survey.track, along with the overall priority of the
+            selected target in the survey as well as the internal program priority
 
         """
         if program in self.special:
@@ -500,6 +544,42 @@ class Survey:
         self.candidates.loc[self.candidates['tic'] == int(pick.tic),'in_%s'%program] = 1
         self.update_targets()
         self.i += 1
+
+
+    def add_program_pick(self, pick, program):
+        """
+        Updates the survey.track with the new selection, including the program, the internal
+        program priority (or pick number), the selected target's TOI and TIC.
+
+        """
+        self.track[self.n][self.i] = {}
+        self.track[self.n][self.i]['program'] = program
+        self.track[self.n][self.i]['program_pick'] = self.sciences.loc[program,'pick_number']+1
+        self.track[self.n][self.i]['toi'] = float(pick.toi)
+        self.track[self.n][self.i]['tic'] = int(pick.tic)
+
+
+    def update_program_hours(self):
+        """
+        Updates the survey.track with the final remaining hours for each program 
+        after any credits or debits were made in the single iteration (transaction).
+
+        """
+        for program, hours in zip(self.sciences.index.values.tolist(), self.sciences.remaining_hours.values.tolist()):
+            self.track[self.n][self.i][program] = round(hours,3)
+        self.track[self.n][self.i]['total_time'] = round(np.sum(self.sciences.remaining_hours.values.tolist()),3)
+
+
+    def update_targets(self):
+        """
+        Updates the survey sample (via survey.candidates), which counts the number of programs 
+        a given target was selected by.
+
+        """
+        start = np.array([0]*len(self.candidates))
+        for science in self.sciences.index.values.tolist():
+            start += self.candidates['in_%s'%science].values.tolist()
+        self.candidates['in_other_programs'] = start
 
 
     def get_seeds(self):

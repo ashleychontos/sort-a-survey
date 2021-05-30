@@ -86,7 +86,7 @@ def exposure_time(vmag, counts, iodine=False, t1=110., v1=8., exp1=250., iodine_
     return exptime
 
 
-def exposure_counts(vmag, exptime, **kwargs):
+def exposure_counts(vmag, exptime):
     """
     Inverse of `exposure_time.` Given a magnitude and an exposure
     time, how many counts will be collected?
@@ -97,7 +97,6 @@ def exposure_counts(vmag, exptime, **kwargs):
         Johnson V mag
     exptime : float
         exposure time in seconds
-        **kwargs : keyword arguments passed to exposure_time
     
     Returns
     -------
@@ -136,10 +135,8 @@ def exp_ramp(vmag, v1=10.5, v2=12.0, c1=250., c2=60.):
         expected number of photon counts (x1000)
 
     """
-
     if vmag <= v1:
         return c1
-
     if vmag >= v2:
         return c2
 

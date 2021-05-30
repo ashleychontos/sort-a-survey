@@ -1,16 +1,9 @@
 import argparse
 
 
-#import sortasurvey
-#from sortasurvey import pipeline
-#from sortasurvey import INPDIR, OUTDIR
-
-import pipeline
-import os
-
-_ROOT = os.path.abspath(os.getcwd())
-INPDIR = os.path.join(_ROOT, 'info')
-OUTDIR = os.path.join(_ROOT, 'results')
+import sortasurvey
+from sortasurvey import pipeline
+from sortasurvey import INPDIR, OUTDIR
 
 
 def main():
@@ -18,11 +11,11 @@ def main():
                                      description="sort-a-survey: automated, optimizable and reproducible target selection",
                                      prog="sort-a-survey",
     )
-#    parser.add_argument('-version', '--version',
-#                        action='version',
-#                        version="%(prog)s {}".format(sortasurvey.__version__),
-#                        help="Print version number and exit."
-#    )
+    parser.add_argument('-version', '--version',
+                        action='version',
+                        version="%(prog)s {}".format(sortasurvey.__version__),
+                        help="Print version number and exit."
+    )
 
     # In the parent parser, we define arguments and options common to all subcommands
     parent_parser = argparse.ArgumentParser(add_help=False)
@@ -72,15 +65,15 @@ def main():
     sub_parser = parser.add_subparsers(title='subcommands', dest='subcommand')
 
     # Setting up
-    parser_setup = sub_parser.add_parser('setup', parents=[parent_parser],
-                                         description='Easy setup for directories and files')
+    parser_setup = sub_parser.add_parser('setup', help='Easy setup for directories and files',
+                                         parents=[parent_parser])
     parser_setup.set_defaults(func=pipeline.setup)
 
     # Running pySYD in regular mode
 
-    parser_run = sub_parser.add_parser('rank', help='Rank targets for the survey', 
+    parser_run = sub_parser.add_parser('rank', help='Rank targets for a given survey', 
                                        parents=[parent_parser])
-    parser_run.add_argument('-iter', '--iter', '-step', '--step', '-iterations', '--iterations', '-steps', '--steps', 
+    parser_run.add_argument('-mc', '--mc', '-iter', '--iter', '-steps', '--steps', 
                             dest='iter', 
                             help='Number of selection process iterations (default=1)',
                             default=1, 
@@ -109,12 +102,6 @@ def main():
                             help='Turn off the saving of output data products and figures (default=True)',
                             default=True, 
                             action='store_false',
-    )
-    parser_run.add_argument('-show', '--show',
-                            dest='show',
-                            help='Show output figures (default=False)',
-                            default=False, 
-                            action='store_true',
     )
     parser_run.add_argument('-sp', '--sp', '-special', '--special',
                             dest='special',
