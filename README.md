@@ -15,7 +15,7 @@ Science Institute and the W. M. Keck Observatory.
 
 ## Attribution
 
-Written by Ashley Chontos with contributions from Corey Beard, Tara Fetherolf, BJ Fulton, Joey Murphy, Erik Petigura, 
+Written by Ashley Chontos, BJ Fulton, Joey Murphy and Erik Petigura, with contributions from Corey Beard, Tara Fetherolf,  
 Ryan Rubenzahl and Judah van Zandt.
 
 Please cite the [original publication](https://ui.adsabs.harvard.edu/abs/2009CoAst.160...74H/abstract) if you make 
@@ -24,9 +24,6 @@ use of this software in your work.
 ## Documentation
 
 Read the documentation at [sortasurvey.readthedocs.io](https://sortasurvey.readthedocs.io)
-
-
-<div align="center">
 
 ## Acknowledgements
 
@@ -41,5 +38,3 @@ the telescopes of Lick Observatory.
 We are grateful to the time assignment committees of the University of California, University of Hawai'i, the California 
 Institute of Technology, and NASA for supporting the TESS-Keck Survey with observing time at Keck Observatory and on the 
 Automated Planet Finder. We thank NASA for funding associated with our Key Strategic Mission Support project. 
-  
-</div>
