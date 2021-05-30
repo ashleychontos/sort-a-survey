@@ -8,7 +8,7 @@ hands-off target selection for large astronomical surveys
 ## Features
 
 Can't converge on a final target list? Do multiple science goals have you tripped up? Are you having a hard time balancing
-several programs within a given allocation? Have several nights of observing coming up? 
+several programs within a fixed allocation? Have several nights of observing coming up? 
 
 **Let `sortasurvey` do the heavy lifting for you.**
 
