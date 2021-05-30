@@ -8,18 +8,20 @@
 --------------------------------------------------------------------------------
 
 The work presented here was motivated by the TESS-Keck Survey (TKS), a large, dedicated radial velocity program using 
-over 100 nights on Keck/HIRES to study exoplanets identified by the [NASA TESS](https://tess.mit.edu) mission. TKS is
-a collaboration between researchers at the California Institute of Technology, the University of California (Berkeley, 
-Irvine, Los Angeles, Riverside, Santa Cruz), the University of Hawai'i, the University of Kansas, NASA, the NASA Exoplanet 
-Science Institute and the W. M. Keck Observatory.
+over 100 nights on Keck/HIRES to study transiting planets identified by the [NASA TESS](https://tess.mit.edu) mission. 
+TKS is a collaboration between researchers at the California Institute of Technology, the University of California, the
+University of Hawai'i, the University of Kansas, NASA, the NASA Exoplanet Science Institute and the W. M. Keck Observatory.
 
 ## Attribution
 
-Written by Ashley Chontos, BJ Fulton, Joey Murphy and Erik Petigura, with contributions from Corey Beard, Tara Fetherolf,  
+Written by Ashley Chontos, with contributions from:
+- BJ Fulton, Erik Petigura, for HIRES-related functions in `observing.py`
+- Joey Murphy, for functionality related to exoplanet atmospheres (TKS SC3)
+- Corey Beard, Tara Fetherolf,  
 Ryan Rubenzahl and Judah van Zandt.
 
 Please cite the [original publication](https://ui.adsabs.harvard.edu/abs/2009CoAst.160...74H/abstract) if you make 
-use of this software in your work.
+use of this software or TKS sample in your work.
 
 ## Documentation
 
