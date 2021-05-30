@@ -1,11 +1,73 @@
-## **sort-a-survey:**
-## **an automated, optimizable & reproducible target selection algorithm**
-
 [![PyPI Status](https://badge.fury.io/py/sortasurvey.svg)](https://badge.fury.io/py/sortasurvey)
 [![Documentation Status](https://readthedocs.org/projects/sortasurvey/badge/?version=latest)](https://sortasurvey.readthedocs.io/en/latest/?badge=latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg)](https://opensource.org/licenses/MIT)
 
---------------------------------------------------------------------------------
+# sort-a-survey:
+hands-off target selection for large astronomical surveys
+
+## Features
+
+`sortasurvey` can be:
+
+- *Automated*
+  - takes what would be an otherwise-complicated process and make it totally hands-off
+- *Optimized*
+  - can be ran many times with many different scenarios to create a sample that best fits your survey needs
+- *Reproduced*
+  - the randomized selection process and sample can be easily reproduced with our random seed feature
+- *Tested*
+  - Monte-carlo-like simulation capabilities to test how robust your survey sample is
+- *Visualized*
+  - creates helpful summary tables and stats
+
+## Installation
+
+Install `sortasurvey` using pip:
+
+```
+$ pip install sortasurvey
+```   
+
+The `survey` binary should have been automatically placed in your system's path by the
+command. If your system can not find the `survey` executable, `cd` into the 
+top-level `sortasurvey` directory and try running the following command:
+
+```
+$ python setup.py install
+```
+
+You may test your installation by using `survey --help` to see available command-line options:
+
+```
+$ survey --help
+usage: sort-a-survey [-h] [-version] {setup,rank} ...
+
+sort-a-survey: automated, optimizable and reproducible target selection
+
+optional arguments:
+  -h, --help           show this help message and exit
+  -version, --version  Print version number and exit.
+
+subcommands:
+  {setup,rank}
+    setup              Easy setup for directories and files
+    rank               Rank targets for a given survey
+```
+
+## Command line interface
+
+isoclassify includes a command line interface (CLI) for convenient single star processing, as well as batch processing of many stars.
+
+### Tutorials 
+
+Follow examples in
+
+- `radvel/docs/tutorials/SyntheticData.ipynb`
+- `radvel/docs/tutorials/K2-24_Fitting+MCMC.ipynb`
+- `radvel/docs/tutorials/164922_Fitting+MCMC.ipynb`
+- `radvel/docs/tutorials/GaussianProcess-tutorial.ipynb`
+
+-------------------------------------------------------------------------------
 
 The work presented here was motivated by the TESS-Keck Survey (TKS), a large, dedicated radial velocity program using 
 over 100 nights on Keck/HIRES to study transiting planets identified by the [NASA TESS](https://tess.mit.edu) mission. 
@@ -16,11 +78,8 @@ this algorithm to the final TKS sample.
 
 ## Attribution
 
-Written by Ashley Chontos, with contributions from:
-- BJ Fulton, Erik Petigura, for HIRES-related functions in `observing.py`
-- Joey Murphy, for functionality related to exoplanet atmospheres (TKS SC3)
-- Corey Beard, Tara Fetherolf,  
-Ryan Rubenzahl and Judah van Zandt.
+Written by Ashley Chontos, with contributions from BJ Fulton, Erik Petigura, Joey Murphy, Ryan Rubenzahl, Sarah Blunt,
+Corey Beard, Tara Fetherolf, and Judah van Zandt.
 
 Please cite the [original publication](https://ui.adsabs.harvard.edu/abs/2009CoAst.160...74H/abstract) if you make 
 use of this software or the TKS sample in your work.
