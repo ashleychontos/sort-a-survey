@@ -21,7 +21,7 @@ Written by Ashley Chontos, with contributions from:
 Ryan Rubenzahl and Judah van Zandt.
 
 Please cite the [original publication](https://ui.adsabs.harvard.edu/abs/2009CoAst.160...74H/abstract) if you make 
-use of this software or TKS sample in your work.
+use of this software or the TKS sample in your work.
 
 ## Documentation
 
