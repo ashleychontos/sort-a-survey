@@ -2,10 +2,12 @@
 
    <br />
 
-sort-a-survey: |br| an automated target selection |br| algorithm for large collaborations
-=========================================================================================
+sort-a-survey: an automated, optimizable & reproducible target selection algorithm
+==================================================================================
 
-This work was motivated by the TESS-Keck Survey, a very large program between researchers
+`sortasurvey` is an open-source python package to select survey targets 
+
+This work was motivated by the TESS-Keck Survey (TKS), a very large program between researchers
 at Caltech, the University of California, the Univerity of Hawai'i, the University of Kansas,
 NASA, the NASA Exoplanet Science Institute, and the W. M. Keck Observatory.
 
@@ -20,7 +22,7 @@ Bug reports and feature requests should be posted to the `GitHub issue tracker <
 
    quickstart
    overview
-   examples
+   tks
    api
    
 Indices and tables for the source code

@@ -2,8 +2,8 @@
 
 Pipeline
 ========
-Used with the command line interface (CLI), which will accept the command line arguments
-and initialize the appropriate module. This includes the main pipeline initialization
+Used with the command line interface (CLI), which will use the command line arguments
+to initialize the appropriate module.
 
 .. module:: sortasurvey
 

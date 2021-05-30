@@ -3,7 +3,7 @@
 Observing
 =========
 Observing utilities, which is mainly centered around the very import cost 
-function, which heavily depends on the instrument of use in the survey.
+function and heavily depends on the instrument the survey is (will be) using. 
 
 .. module:: sortasurvey
 

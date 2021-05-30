@@ -25,7 +25,7 @@ Info/
 
 There are four main files provided:
 
-#. **info/TOIs_perfect.csv** : the vetted `Survey` sample to select targets from. Slee
+#. **info/TOIs_perfect.csv** : the vetted `Survey` sample to select targets from ** important: selection criteria and prioritization metrics must match exact column names to work properly **
 
 #. **info/survey_info.csv** : provides most of the information required for the algorithm to run successfully
 

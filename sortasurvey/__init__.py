@@ -8,7 +8,7 @@ from .utils import *
 
 __all__ = ['cli', 'observing', 'pipeline', 'sample', 'survey', 'utils']
 
-__version__ = '0.0.8'
+__version__ = '0.0.9'
 
 
 _ROOT = os.path.abspath(os.getcwd())

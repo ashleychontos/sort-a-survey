@@ -448,8 +448,10 @@ class Survey:
     def check_2D_overlap(self, pick, program):
         """
         Multi-planet systems (i.e. the same observed target) can fall into more than
-        one bin so this needs to be checked at each step, as well as the number of 
-        available targets per bin. This also resets the special 'stuck' counter.
+        one bin so this needs to be re-evaluated at every step, as well as the number of 
+        available targets per bin. In summary, this will ensure that the programs requiring
+        a more sophisticated selection approach will still have targets left to select. 
+        Running this also resets the special 'stuck' counter.
 
         Parameters
         ----------
@@ -511,11 +513,6 @@ class Survey:
 
         1)  adds the program and the program pick to the survey.track 
         2)  reduces the available number of targets left in a program by 1
-        2b) there is an additional 'special' step for programs using a 2D selection process, 
-            which calls self.check_2D_overlap(pick, program) to see if the target had additional
-            planets that fell in other bins, so as to not double-count a target (the primary 
-            role for this step is to make sure the special science case(s) still have targets 
-            to select from)
         3)  checks if the target has been selected by other programs and if `True`, credits the
             appropriate programs back the difference in cost
         4)  after crediting/debiting all relevant programs, the remaining hours in all programs

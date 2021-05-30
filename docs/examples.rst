@@ -1,5 +1,5 @@
-.. _examples:
+.. _TKS:
 
-Examples
-########
+The TESS-Keck Survey
+####################
 

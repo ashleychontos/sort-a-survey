@@ -2,9 +2,8 @@
 
 Sample
 ======
-Sample class helpful for taking a sample and downselecting
-based on a specific program's selection criteria, observing
-methods and priorities.
+The Sample class is a convenient way to quickly create a filtered sample
+from a much larger sample by specifying a survey and survey program. 
 
 .. module:: sortasurvey
 
