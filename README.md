@@ -7,7 +7,14 @@ hands-off target selection for large astronomical surveys
 
 ## Features
 
-`sortasurvey` can be:
+Can't converge on a final target list? Do multiple science goals have you tripped up? Are you having a hard time balancing
+several programs within a given allocation? Have several nights of observing coming up? 
+
+**Let `sortasurvey` do the heavy lifting for you.**
+
+`sortasurvey` is:
+
+Imagine a survey sample that can be:
 
 - *Automated*
   - takes what would be an otherwise-complicated process and make it totally hands-off
@@ -54,7 +61,7 @@ subcommands:
     rank               Rank targets for a given survey
 ```
 
-## Command line interface
+## Advanced Usage
 
 isoclassify includes a command line interface (CLI) for convenient single star processing, as well as batch processing of many stars.
 
@@ -63,9 +70,6 @@ isoclassify includes a command line interface (CLI) for convenient single star p
 Follow examples in
 
 - `radvel/docs/tutorials/SyntheticData.ipynb`
-- `radvel/docs/tutorials/K2-24_Fitting+MCMC.ipynb`
-- `radvel/docs/tutorials/164922_Fitting+MCMC.ipynb`
-- `radvel/docs/tutorials/GaussianProcess-tutorial.ipynb`
 
 -------------------------------------------------------------------------------
 
