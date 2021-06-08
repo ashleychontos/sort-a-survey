@@ -1,7 +1,3 @@
-[![PyPI Status](https://badge.fury.io/py/sortasurvey.svg)](https://badge.fury.io/py/sortasurvey)
-[![Documentation Status](https://readthedocs.org/projects/sortasurvey/badge/?version=latest)](https://sortasurvey.readthedocs.io/en/latest/?badge=latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-orange.svg)](https://opensource.org/licenses/MIT)
-
 # sort-a-survey:
 hands-off target selection for large astronomical surveys
 
@@ -59,11 +55,11 @@ subcommands:
     rank               Rank targets for a given survey
 ```
 
-### Tutorials 
+## Tutorial
 
-Follow examples in
+Follow example in
 
-- `radvel/docs/tutorials/SyntheticData.ipynb`
+- `sort-a-survey/examples/TKS.ipynb`
 
 -------------------------------------------------------------------------------
 
@@ -81,10 +77,6 @@ Corey Beard, Tara Fetherolf, and Judah van Zandt.
 
 Please cite the [TKS paper] if you make 
 use of this software or the TKS sample in your work.
-
-## Documentation
-
-Read the documentation at [sortasurvey.readthedocs.io](https://sortasurvey.readthedocs.io)
 
 ## Acknowledgements
 
