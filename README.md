@@ -59,10 +59,6 @@ subcommands:
     rank               Rank targets for a given survey
 ```
 
-## Advanced Usage
-
-isoclassify includes a command line interface (CLI) for convenient single star processing, as well as batch processing of many stars.
-
 ### Tutorials 
 
 Follow examples in
@@ -83,7 +79,7 @@ this algorithm to the final TKS sample.
 Written by Ashley Chontos, with contributions from BJ Fulton, Erik Petigura, Joey Murphy, Ryan Rubenzahl, Sarah Blunt,
 Corey Beard, Tara Fetherolf, and Judah van Zandt.
 
-Please cite the [original publication](https://ui.adsabs.harvard.edu/abs/2009CoAst.160...74H/abstract) if you make 
+Please cite the [TKS paper] if you make 
 use of this software or the TKS sample in your work.
 
 ## Documentation
