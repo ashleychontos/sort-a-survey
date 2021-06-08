@@ -12,8 +12,6 @@ several programs within a set allocation? Have several nights of observing comin
 
 **Let `sortasurvey` do the heavy lifting for you.**
 
-`sortasurvey` is:
-
 Imagine a survey sample that can be:
 
 - *Automated*
