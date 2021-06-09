@@ -1,26 +1,6 @@
 # sort-a-survey:
 hands-off target selection for large astronomical surveys
 
-## Features
-
-Can't converge on a final target list? Do multiple science goals have you tripped up? Are you having a hard time balancing
-several programs within a set allocation? Have several nights of observing coming up? 
-
-**Let `sortasurvey` do the heavy lifting for you.**
-
-Imagine a survey sample that can be:
-
-- *Automated*
-  - takes what would be an otherwise-complicated process and make it totally hands-off
-- *Optimized*
-  - can be ran many times with many different scenarios to create a sample that best fits your survey needs
-- *Reproduced*
-  - the randomized selection process and sample can be easily reproduced with our random seed feature
-- *Tested*
-  - Monte-carlo-like simulation capabilities to test how robust your survey sample is
-- *Visualized*
-  - creates helpful summary tables and stats
-
 ## Installation
 
 Install `sortasurvey` using pip:
@@ -54,6 +34,26 @@ subcommands:
     setup              Easy setup for directories and files
     rank               Rank targets for a given survey
 ```
+
+## Features
+
+Can't converge on a final target list? Do multiple science goals have you tripped up? Are you having a hard time balancing
+several programs within a set allocation? Have several nights of observing coming up? 
+
+**Let `sortasurvey` do the heavy lifting for you.**
+
+Imagine a survey sample that can be:
+
+- *Automated*
+  - takes what would be an otherwise-complicated process and make it totally hands-off
+- *Optimized*
+  - can be ran many times with many different scenarios to create a sample that best fits your survey needs
+- *Reproduced*
+  - the randomized selection process and sample can be easily reproduced with our random seed feature
+- *Tested*
+  - Monte-carlo-like simulation capabilities to test how robust your survey sample is
+- *Visualized*
+  - creates helpful summary tables and stats
 
 ## Tutorial
 
