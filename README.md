@@ -1,5 +1,5 @@
-# sort-a-survey:
-hands-off target selection for large astronomical surveys
+# sort-a-survey
+automated target selection for large astronomical surveys
 
 ## Installation
 
