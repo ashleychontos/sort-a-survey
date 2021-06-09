@@ -162,7 +162,7 @@ def make_final(survey):
         else:
             survey.df.to_csv('%s/TOIs_perfect_final.csv'%survey.path_save, index=False)
         if survey.verbose and not survey.emcee:
-            print('   - copy of updated sample information saved'%survey.path_save)
+            print('   - copy of updated sample information saved')
     survey.final = survey.df.copy()
     return survey
       
@@ -195,7 +195,7 @@ def make_ranking_steps(survey):
         else:
             df.to_csv('%s/ranking_steps.csv'%survey.path_save)
         if survey.verbose and not survey.emcee:
-            print('   - algorithm history saved as ranking steps'%survey.path_save)
+            print('   - algorithm history saved as ranking steps')
     survey.ranking_steps = df.copy()
     return survey
     
@@ -237,7 +237,7 @@ def assign_priorities(survey, obs={}, m=1):
         else:
             observed.to_csv('%s/observing_priorities.csv'%survey.path_save, index = False)
         if survey.verbose and not survey.emcee:
-            print('   - final prioritized list saved'%survey.path_save)
+            print('   - final prioritized list saved')
     survey.observed = observed.copy()
     return survey
 
@@ -387,12 +387,12 @@ def emcee_rankings(survey):
         df.loc[i, "other_programs"] = total
     df.to_csv('%s/TOIs_perfect_mc.csv'%survey.path_save)
     if survey.verbose:
-        print('   - spreadsheet containing MC information saved to %s/TOIs_perfect_mc.csv'%survey.path_save)
+        print('   - spreadsheet containing MC information saved')
     emcee_df = df.copy()
     return emcee_df
           
   
-def get_stats(survey, note='', finish=False):
+def get_stats(survey, note='', output='', finish=False):
     """
     Logs information from the run necessary to reproduce the sample,
     i.e. seed number, any special science cases, any ignored science 
@@ -415,18 +415,23 @@ def get_stats(survey, note='', finish=False):
     df = survey.overlap.copy()
     time = datetime.datetime.now()
     note += time.strftime("%a %m/%d/%y %I:%M%p") + '\n'
+    output += time.strftime("%a %m/%d/%y %I:%M%p") + '\n'
     note += 'Seed no: %d\n'%survey.seeds[survey.n-1]
     note += 'Out of the %d total targets:\n'%len(df)
+    output += 'Out of the %d total targets:\n'%len(df)
     for science in survey.programs.index.values.tolist():
         if science == 'TOA':
             note += '  - %s has %d targets\n'%(science, len(df))
+            output += '  - %s has %d targets\n'%(science, len(df))
         else:
             a = df['in_'+science].values.tolist()
             d = {x:a.count(x) for x in a}
             try:
                 note += '  - %s has %d targets\n'%(science, d['X'])
+                output += '  - %s has %d targets\n'%(science, d['X'])
             except KeyError:
                 note += '  - %s has %d targets\n'%(science, 0)
+                output += '  - %s has %d targets\n'%(science, 0)
     if survey.save:
         if survey.emcee:
             f = open('%s/%d/run_info.txt'%(survey.path_save,survey.n), "w")
@@ -439,7 +444,7 @@ def get_stats(survey, note='', finish=False):
             print('')
             print(' --- process complete ---')
             print('')
-            print(note)
+            print(output)
 
 
 def get_columns(type, sciences):
