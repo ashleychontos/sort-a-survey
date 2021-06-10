@@ -59,10 +59,7 @@ def make_data_products(survey):
                 print("   - algorithm took %d seconds to run"%(int(survey.ranking_time)))
     else:
         if survey.verbose:
-            query = survey.df.query('in_other_programs != 0')
-            query = query.drop_duplicates(subset = 'tic')
             print("   - algorithm took %d seconds to run"%(int(survey.ranking_time)))
-            print('   - %d targets were selected'%len(query))
 
     if survey.save:
         if not survey.emcee:
@@ -97,8 +94,6 @@ def make_directory(survey, i=1):
         updated Survey class object with the new 'path_save' attribute
 
     """
-    if survey.verbose and not survey.emcee:
-        print('   - Making data products, including:')
     now = datetime.datetime.now()
     name = now.strftime("%m-%d-%y")
     newdir = '%s/%s-%d'%(survey.outdir,name,i)
@@ -113,7 +108,8 @@ def make_directory(survey, i=1):
     return survey
           
   
-def make_final_sample(survey, cols_to_drop=['select_DG','TSM','SC3_bin_rank','drop','false','n_select']):
+def make_final_sample(survey, special=["SC2A", "SC4", "SC2Bii"], 
+                      cols_to_drop=['select_DG','TSM','SC3_bin_rank','drop','false','n_select']):
     """
     Makes a directory for the output files
 
@@ -128,46 +124,43 @@ def make_final_sample(survey, cols_to_drop=['select_DG','TSM','SC3_bin_rank','dr
         updated Survey class object with the new 'path_save' attribute
 
     """
-    # SC2A has a very different observing approach than a majority of TKS programs
-    changes = survey.df.query('in_SC2A == 1 and in_other_programs == 1')
-    method = survey.programs.loc['SC2A', 'method']
-    for i in changes.index.values.tolist():
-        df_temp = changes.loc[i]
-        nobs_goal = int(float((method.split('-')[1]).split('=')[-1]))
-        survey.df.loc[i, "nobs_goal"] = nobs_goal
-        tottime = observing.cost_function(df_temp, method, include_archival=False)
-        survey.df.loc[i, "tot_time"] = round(tottime/3600.,3)
-        remaining_nobs = int(nobs_goal - survey.df.loc[i, "nobs"])
-        if remaining_nobs < 0:
-            remaining_nobs = 0
-        survey.df.loc[i, "rem_nobs"] = remaining_nobs
-        lefttime = observing.cost_function(df_temp, method)
-        survey.df.loc[i, "rem_time"] = round(lefttime/3600.,3)
-    # same for SC4 (evolved)
-    changes = survey.df.query('in_SC4 == 1 and in_other_programs == 1')
-    method = survey.programs.loc['SC4', 'method']
-    for i in changes.index.values.tolist():
-        df_temp = changes.loc[i]
-        nobs_goal = int(float((method.split('-')[1]).split('=')[-1]))
-        survey.df.loc[i, "nobs_goal"] = nobs_goal
-        tottime = observing.cost_function(df_temp, method, include_archival=False)
-        survey.df.loc[i, "tot_time"] = round(tottime/3600.,3)
-        remaining_nobs = int(nobs_goal - survey.df.loc[i, "nobs"])
-        if remaining_nobs < 0:
-            remaining_nobs = 0
-        survey.df.loc[i, "rem_nobs"] = remaining_nobs
-        lefttime = observing.cost_function(df_temp, method)
-        survey.df.loc[i, "rem_time"] = round(lefttime/3600.,3)
-    # we need to also add in our RM targets
-    for target in survey.programs.loc['SC2Bii', 'high_priority']:
-        survey.df.loc[survey.df['toi'] == target,'in_SC2Bii'] = 1
-        if np.isnan(survey.df.loc[survey.df['toi'] == target, 'priority'].values.tolist()[0]):
-            survey.df.loc[survey.df['toi'] == target, 'priority'] = survey.df['priority'].max()+1
-    start = np.array([0]*len(survey.df))
-    for science in survey.programs.index.values.tolist():
-        start += survey.df['in_%s'%science].values.tolist()
-    survey.df['in_other_programs'] = start
+    for science in special:
+        if science in survey.programs.index.values.tolist():
+            if science == 'SC2A' or science == 'SC4':
+            # SC2A+SC4 have different observing approaches than a majority of TKS programs
+                changes = survey.df.query('in_%s == 1 and in_other_programs == 1'%science)
+                method = survey.programs.loc[science, 'method']
+                for i in changes.index.values.tolist():
+                    df_temp = changes.loc[i]
+                    nobs_goal = int(float((method.split('-')[1]).split('=')[-1]))
+                    survey.df.loc[i, "nobs_goal"] = nobs_goal
+                    tottime = observing.cost_function(df_temp, method, include_archival=False)
+                    survey.df.loc[i, "tot_time"] = round(tottime/3600.,3)
+                    remaining_nobs = int(nobs_goal - survey.df.loc[i, "nobs"])
+                    if remaining_nobs < 0:
+                        remaining_nobs = 0
+                    survey.df.loc[i, "rem_nobs"] = remaining_nobs
+                    lefttime = observing.cost_function(df_temp, method)
+                    survey.df.loc[i, "rem_time"] = round(lefttime/3600.,3)
+            elif science == 'SC2Bii':
+            # we need to also add in our RM targets
+                for target in survey.programs.loc['SC2Bii', 'high_priority']:
+                    survey.df.loc[survey.df['toi'] == target,'in_SC2Bii'] = 1
+                    if np.isnan(survey.df.loc[survey.df['toi'] == target, 'priority'].values.tolist()[0]):
+                        survey.df.loc[survey.df['toi'] == target, 'priority'] = survey.df['priority'].max()+1
+                start = np.array([0]*len(survey.df))
+                for science in survey.programs.index.values.tolist():
+                    start += survey.df['in_%s'%science].values.tolist()
+                survey.df['in_other_programs'] = start
+            else:
+            # feel free to add other special cases here
+                pass
     survey.df.drop(columns=cols_to_drop, errors='ignore', inplace=True)
+    if survey.verbose and not survey.emcee:
+        query_all = survey.df.query('in_other_programs != 0')
+        query_star = query.drop_duplicates(subset = 'tic')
+        print('   - %d targets were selected, containing a total of %d planets'%(len(query_star),len(query_all)))
+        print('   - Making data products, including:')
     if survey.save:
         if survey.emcee:
             survey.df.to_csv('%s/%d/TOIs_perfect_final.csv'%(survey.path_save, survey.n), index=False)

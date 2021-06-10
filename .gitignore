@@ -8,6 +8,5 @@ build
 dist
 *.egg-info
 *__pycache__/
-results/
-info/*test.csv
-info/*copy.csv
+examples/results/
+examples/info/*copy.csv
