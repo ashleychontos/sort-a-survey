@@ -172,7 +172,7 @@ def make_final_sample(survey, cols_to_drop=['select_DG','TSM','SC3_bin_rank','dr
         if survey.emcee:
             survey.df.to_csv('%s/%d/TOIs_perfect_final.csv'%(survey.path_save, survey.n), index=False)
         else:
-            survey.df.to_csv('%s/%s_final.csv'%(survey.path_save, survey.path_sample.split('.')[0]), index=False)
+            survey.df.to_csv('%s/%s_final.csv'%(survey.path_save, (survey.path_sample.split('/')[-1]).split('.')[0]), index=False)
         if survey.verbose and not survey.emcee:
             print('     - a copy of the updated sample')
     survey.final = survey.df.copy()

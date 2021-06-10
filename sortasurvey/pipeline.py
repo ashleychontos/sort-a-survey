@@ -71,7 +71,7 @@ def rank(args, stuck=0):
     utils.make_data_products(survey)
 
 
-def setup(args, note='', source='https://raw.githubusercontent.com/ashleychontos/sort-a-survey/main/info'):
+def setup(args, note='', source='https://raw.githubusercontent.com/ashleychontos/sort-a-survey/main/examples/'):
     """
     Running this after installation will create the appropriate directories in the current working
     directory as well as download example files to test your installation.
@@ -86,7 +86,6 @@ def setup(args, note='', source='https://raw.githubusercontent.com/ashleychontos
         source directory to download example files to test your installation
 
     """
-
     print('\nDownloading relevant data from source directory:')
     note+='\n\nNB:\n'
     # create info directory
@@ -95,15 +94,20 @@ def setup(args, note='', source='https://raw.githubusercontent.com/ashleychontos
         note+=' - created input file directory: %s \n'%args.inpdir
 
     # get example TKS input files
-    for file in ['/TOIs_perfect.csv', '/high_priority.csv', '/no_no.csv', '/survey_info.csv']:
-        infile='%s%s'%(source,file)
-        outfile='%s%s'%(args.inpdir,file)
+    for file in ['TKS_sample.csv', 'high_priority.csv', 'no_no.csv', 'survey_info.csv']:
+        infile='%sinfo/%s'%(source,file)
+        outfile=os.path.join(args.inpdir,file)
         subprocess.call(['curl %s > %s'%(infile, outfile)], shell=True)
 
     # create results directory
     if not os.path.exists(args.outdir):
         os.mkdir(args.outdir)
     note+=' - results will be saved to %s \n\n'%args.outdir
-    
+
+    if args.notebook:
+        infile='%sTKS.ipynb'%source
+        outfile=os.path.join(os.path.abspath(os.getcwd()),'TKS.ipynb')
+        subprocess.call(['curl %s > %s'%(infile, outfile)], shell=True)
+
     if args.verbose:
         print(note)

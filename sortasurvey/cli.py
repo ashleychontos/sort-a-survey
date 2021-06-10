@@ -65,6 +65,12 @@ def main():
     # Setting up
     parser_setup = sub_parser.add_parser('setup', help='Easy setup for directories and files',
                                          parents=[parent_parser])
+    parser_setup.add_argument('-nb', '--nb', '-note', '--note', '-notebook', '--notebook', 
+                              dest='notebook', 
+                              help='Use jupyter notebook instead',
+                              default=False, 
+                              action='store_true',
+    )
     parser_setup.set_defaults(func=pipeline.setup)
 
     # Run ranking algorith
