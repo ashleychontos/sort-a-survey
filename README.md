@@ -44,7 +44,7 @@ This last command will set up the proper directories and download a couple examp
 $ survey setup -nb
 ```
 
-Below is a link to the notebook tutorial if you don't want to run it but feel like taking a peek. To run the software via command line, simply execute:
+Please visit the [notebook tutorial](https://github.com/ashleychontos/sort-a-survey/blob/main/examples/TKS.ipynb) if you don't feel like running it but would like to take a peek (there is pretty plots in there, I promise). To run the software via command line, simply execute:
 
 ```
 $ survey rank
@@ -93,7 +93,7 @@ Out of the 86 total targets:
   - TOB has 8 targets
 ```
 
-And now you have our TESS-Keck Survey sample, it's as easy as that! If you'd like to see plots of this sample and/or more verbose output, please check out the jupyter notebook or the paper by Chontos+2021 that discusses this all in more detail.
+And now you have our TESS-Keck Survey sample, it's as easy as that! If you'd like to see plots of this sample and/or more verbose output, please check out the [jupyter notebook](https://github.com/ashleychontos/sort-a-survey/blob/main/examples/TKS.ipynb) or the paper by Chontos+2021 that discusses this all in more detail.
 
 ## Features
 
