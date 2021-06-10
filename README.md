@@ -45,7 +45,7 @@ $ cd survey
 $ survey setup
 ```
 
-This last command will set up the proper directories and download a couple example files to get you started via CLI. Below is a link to a different tutorial if jupyter notebook is more your thing.
+This last command will set up the proper directories and download a couple example files to get you started via command line. Below is a link to a different tutorial if jupyter notebook is more your thing. To run the software, simply execute:
 
 ```
 $ survey rank
