@@ -63,7 +63,7 @@ The verbose command is `True` by default, which should show the following output
    - 242 have also passed various vetting steps
    - ranking algorithm initialized using 50.0 nights (10.0 hr/n)
    - algorithm took 53 seconds to run
-   - 85 targets were selected
+   - 86 targets were selected, containing a total of 103 planets
    - Making data products, including:
      - a copy of the updated sample
      - algorithm history (via ranking steps)
@@ -76,7 +76,7 @@ The verbose command is `True` by default, which should show the following output
  ----- process - complete -----
  ------------------------------
 
-Thu 06/10/21 12:03PM
+Thu 06/10/21 12:54PM
 
 Out of the 86 total targets:
   - SC1A has 31 targets
@@ -92,6 +92,7 @@ Out of the 86 total targets:
   - SC4 has 16 targets
   - TOA has 86 targets
   - TOB has 8 targets
+
 ```
 
 And now you have our TESS-Keck Survey sample, it's as easy as that! If you'd like to see plots of this sample and/or more verbose output, please check out the [jupyter notebook](https://github.com/ashleychontos/sort-a-survey/blob/main/examples/TKS.ipynb) or the paper by Chontos+2021 that discusses this all in more detail.
