@@ -93,7 +93,7 @@ Out of the 86 total targets:
   - TOB has 8 targets
 ```
 
-And now you have our TESS-Keck Survey sample, it's as easy as that!
+And now you have our TESS-Keck Survey sample, it's as easy as that! If you'd like to see plots of this sample and/or more verbose output, please check out the jupyter notebook or the paper by Chontos+2021 that discusses this all in more detail.
 
 ## Features
 
