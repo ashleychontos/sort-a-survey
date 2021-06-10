@@ -35,6 +35,22 @@ subcommands:
     rank               Rank targets for a given survey
 ```
 
+## Quickstart
+
+Once you've successfully installed the software, we suggest to create a new directory to keep all your survey-related stuff in one place. The package also provides a convenient `setup` feature, so to get started: 
+
+```
+$ mkdir survey
+$ cd survey
+$ survey setup
+```
+
+This last command will set up the proper directories and download a couple example files to get you started via command line. Below is a link to a different tutorial if jupyter notebook is more your thing. To run the software, simply execute:
+
+```
+$ survey rank
+```
+
 ## Features
 
 Can't converge on a final target list? Do multiple science goals have you tripped up? Are you having a hard time balancing
