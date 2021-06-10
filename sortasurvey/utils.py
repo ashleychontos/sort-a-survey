@@ -158,7 +158,7 @@ def make_final_sample(survey, special=["SC2A", "SC4", "SC2Bii"],
     survey.df.drop(columns=cols_to_drop, errors='ignore', inplace=True)
     if survey.verbose and not survey.emcee:
         query_all = survey.df.query('in_other_programs != 0')
-        query_star = query.drop_duplicates(subset = 'tic')
+        query_star = query_all.drop_duplicates(subset = 'tic')
         print('   - %d targets were selected, containing a total of %d planets'%(len(query_star),len(query_all)))
         print('   - Making data products, including:')
     if survey.save:
