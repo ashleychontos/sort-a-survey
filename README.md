@@ -37,13 +37,15 @@ subcommands:
 
 ## Quickstart
 
-The package provides a convenient `setup` feature: 
+Once you've successfully installed the software, we suggest to create a new directory to keep all your survey-related stuff in one place. The package also provides a convenient `setup` feature, so to get started: 
 
 ```
+$ mkdir survey
+$ cd survey
 $ survey setup
 ```
 
-This command will set up the proper directories and download a couple example files to get you started via CLI. Below is a link to a different tutorial if jupyter notebook is more your thing.
+This last command will set up the proper directories and download a couple example files to get you started via CLI. Below is a link to a different tutorial if jupyter notebook is more your thing.
 
 ```
 $ survey rank
