@@ -45,20 +45,21 @@ class Survey:
 
     """
     
-    def __init__(self, args, path_sample='info/TOIs_perfect.csv', path_survey='info/survey_info.csv',
+    def __init__(self, args, path_sample='info/TKS_sample.csv', path_survey='info/survey_info.csv',
                  path_priority='info/high_priority.csv', path_ignore='info/no_no.csv', iter=1,
-                 hours_per_night=10., pool=50., progress=True, verbose=True):
+                 hours_per_night=10., pool=50., progress=True, verbose=True, notebook=False):
 
         self.verbose = args.verbose
         self.save = args.save
         self.outdir = args.outdir
         self.iter = args.iter
         self.progress = args.progress
+        self.notebook = notebook
         self.track = {}
         for n in np.arange(1,self.iter+1):
             self.track[n] = {}
         if self.verbose:
-            print('\n -- prioritization starting --\n\n   - loading sample and survey science information')
+            print('\n ------------------------------\n -- prioritization  starting --\n ------------------------------\n\n   - loading sample and survey science information')
         self.get_sample(args)
         self.get_programs(args)
         self.get_seeds()
@@ -96,7 +97,7 @@ class Survey:
         self.add_columns()
         # science-case-specific metrics
         self.get_sc3_info()
-        self.get_counts()
+        self.get_counts(args)
         
 
     def remove_bad(self, disp=['FP','EB','NEB','BEB','SV','BD','NPC','SB1','SB2','FA']):
@@ -117,7 +118,7 @@ class Survey:
         self.sample.query("finish == False", inplace=True)
     
 
-    def add_columns(self, cols=["npl","select_DG","in_other_programs","n_select"]):
+    def add_columns(self, cols=["npl","select_DG","in_other_programs","n_select","priority"]):
         """
         Adds in additional columns that might be relevant for the target selection.
 
@@ -131,7 +132,7 @@ class Survey:
                 self.sample[col] = [0]*len(self.sample)
 
 
-    def get_counts(self):
+    def get_counts(self, args):
         """
         Compute the number of targets that passed the different vetting steps.
 
@@ -143,10 +144,10 @@ class Survey:
         if self.verbose:
             print('   - %d targets make the standard survey cuts'%self.passed_tks)
             print('   - %d have also passed various vetting steps'%self.passed_vet)
-            print('   - ranking algorithm initialized')
+            print('   - ranking algorithm initialized using %.1f nights (%.1f hr/n)'%(args.nights,args.hours))
 
 
-    def get_programs(self, args):
+    def get_programs(self, args, high_priority=[], no_no=[]):
         """
         Stores all relevant information for every program in the survey.
         This is initially loaded in via args.path_survey but also loads in
@@ -161,15 +162,15 @@ class Survey:
         ----------
         programs : pandas.DataFrame
             **very important** dataframe containing all survey program information
-        special : Dict[str,List[str]]
-            dictionary for survey programs that require a more complicated selection process
 
         """
 
         programs = pd.read_csv(args.path_survey, comment="#")
         programs.set_index('programs', inplace=True, drop=False)
-        nono = pd.read_csv(args.path_ignore)
-        priority = pd.read_csv(args.path_priority)
+        if args.path_ignore is not None:
+            nono = pd.read_csv(args.path_ignore)
+        if args.path_priority is not None:
+            priority = pd.read_csv(args.path_priority)
 
         for program in programs.index.values.tolist():
             # get initial allocation
@@ -178,10 +179,13 @@ class Survey:
                 programs.loc[program,'total_time'] += programs.loc[program,'remaining_hours']
             programs.loc[program,'remaining_hours'] = programs.loc[program,'total_time']
             # adjust filter for priority/ignore targets
-            high_priority = [float(target) for target in priority[program].values if target != '-']
-            no_no = [float(target) for target in nono[program].values if target != '-']
-            for toi in (high_priority + no_no):
-                programs.loc[program,'filter'] += " and toi != %.2f"%toi
+            if args.path_priority is not None:
+                high_priority = [float(target) for target in priority[program].values if target != '-']
+            if args.path_ignore is not None:
+                no_no = [float(target) for target in nono[program].values if target != '-']
+            if (high_priority + no_no) != []:
+                for toi in (high_priority + no_no):
+                    programs.loc[program,'filter'] += " and toi != %.2f"%toi
             if programs.loc[program,'n_maximum'] != -1:
                 programs.loc[program,'n_targets_left'] = programs.loc[program,'n_maximum']
             else:
@@ -207,42 +211,13 @@ class Survey:
         programs.drop(columns=['allocations'], inplace=True)
         programs = programs.to_dict('index')
         for program in programs:
-            programs[program]['high_priority'] = [float(target) for target in priority[program].values if target != '-']
+            if args.path_priority is not None:
+                programs[program]['high_priority'] = [float(target) for target in priority[program].values if target != '-']
+            else:
+                programs[program]['high_priority'] = high_priority
         programs = pd.DataFrame.from_dict(programs, orient='index', columns=['name','method','filter','prioritize_by','ascending_by','remaining_hours','n_maximum','total_time','high_priority','n_targets_left','pick_number'])
         programs.to_csv('%s_copy.%s'%(args.path_survey.split('.')[0],args.path_survey.split('.')[-1]))
         self.programs = programs.copy()
-        if args.special is not None:
-            self.get_special(args)
-        else:
-            self.special = {}
-
-
-    def get_special(self, args, special=[]):
-        """
-        Get any special science programs that require a more complicated selection process.
-        For TKS, SC1B uses a 2D selection process and needs to update the filter at each selection
-        step.
-
-        Parameters
-        ----------
-        args : argparse.Namespace
-            command line arguments (via args.special)
-
-        Attributes
-        ----------
-        special : Dict[str,List[str]]
-            dictionary for survey programs with more complicated selection processes
-
-        """
-        for program in args.special:
-            if program.startswith('o') or program.startswith('O'):
-                special.append('T%s'%program.upper())
-            else:
-                special.append('SC%s'%program.upper())
-        sp={}
-        for program in special:
-            sp[program]={}
-        self.special = sp.copy() 
 
 
     # science-case-specific functions
@@ -335,175 +310,31 @@ class Survey:
                         binned_df.loc[binned_df['toi'] == binned_df.loc[idx].sort_values\
                                 (sort_val,ascending=False).iloc[0:num_to_rank]['toi'].iloc[j],'SC3_bin_rank'] = j+1
         return binned_df
-
-
-    def init_2D_filters(self, program):
-        """
-        Sets up filters for a more sophisticated sampling procedure.
-        SC1B of TKS is exploring the possible connection between stellar 
-        flux and gaseous envelopes. To study this effect, the goal is to 
-        randomly but uniformly sample in planet radius vs. incident flux 
-        space. This is done by using 12 equal bin sizes in linear(rp)-log(sinc) 
-        parameter space for a total of nbins=12.
-
-        Parameters
-        ----------
-        program : str
-            the selected program
-
-        """
-        count=0
-        choices={}
-        if program == 'SC1B':
-            y_bins = np.arange(1,5)
-            x_bins = np.logspace(0,2,5)
-            science_filter = "rp > %f and rp < %f and period > %f and period < %f"
-            n_bins = (len(y_bins)-1)*(len(x_bins)-1)
-            for i in range(n_bins):
-                x = i%(len(x_bins)-1)
-                y = i%(len(y_bins)-1)
-                filter = science_filter%(y_bins[y],y_bins[y+1],x_bins[x],x_bins[x+1])
-                query = self.candidates.query(filter)
-                query = query.drop_duplicates(subset='tic')
-                if not query.empty:
-                    choices[count] = {}
-                    choices[count]['targets_left'] = len(query)
-                    choices[count]['filter'] = filter
-                    count += 1
-            choices = pd.DataFrame.from_dict(choices, orient='index')
-            if count != n_bins:
-                choose = np.arange(1,count+1,1)
-            else:
-                choose = np.arange(1,n_bins+1,1)
-            # it will randomize the bin filters for one entire round (using all 12 bins)
-            choose = np.random.permutation(choose)[:]
-            choices = choices.set_index(choose)
-            choices = choices.sort_index()
-        return choices
-
-
-    def get_2D_filter(self, program):
-        """
-        This procedure is called for science cases that wish to uniformly 
-        and randomly sample over a 2-dimensional space. An example is SC1B
-        from the TESS-Keck Survey, which requires an additional step to
-        select a filters from the list of filters.
-
-        Parameters
-        ----------
-        program : str
-            the selected program
-
-        """
-        pick_number = self.special[program]['pick_number']
-        choices = self.special[program]['choices']
-        while True:
-            n_bins = len(choices)
-            # first check if the bin has any targets left
-            if pick_number%n_bins == 0:
-                # special case for the final bin in the round of choices
-                check = choices.loc[n_bins,'targets_left']
-                if check != 0:
-                    # if it does, use the filter
-                    filter = choices.loc[n_bins,'filter']
-                    # reset filter choices
-                    self.reset_2D_filters(program)
-                    break
-                else:
-                    # if not, reset filter choices
-                    self.reset_2D_filters(program)
-            else:
-                check = choices.loc[pick_number%n_bins,'targets_left']
-                if check != 0:
-                    # select filter
-                    filter = choices.loc[pick_number%n_bins,'filter']
-                    break
-            # keep going until an appropriate bin/filter is selected
-            pick_number += 1
-        pick_number += 1
-        self.special[program]['pick_number'] = pick_number
-        self.sciences.loc[program,'filter'] = filter
-
-
-    def reset_2D_filters(self, program):
-        """
-        Once all 2D bins (i.e. filters) have been used for a given program, 
-        they need to be reset, which includes randomizing the bin order selection.
-
-        Parameters
-        ----------
-        program : str
-            the selected program
-
-        """
-        choices = self.special[program]['choices']
-        new_df = choices.query('targets_left != 0')
-        n_bins = len(new_df)
-        choose = np.arange(1,n_bins+1,1)
-        choose = np.random.permutation(choose)[:]
-        choices = new_df.set_index(choose)
-        self.special[program]['choices'] = choices.copy()
-
-
-    def check_2D_overlap(self, pick, program):
-        """
-        Multi-planet systems (i.e. the same observed target) can fall into more than
-        one bin so this needs to be re-evaluated at every step, as well as the number of 
-        available targets per bin. In summary, this will ensure that the programs requiring
-        a more sophisticated selection approach will still have targets left to select. 
-        Running this also resets the special 'stuck' counter.
-
-        Parameters
-        ----------
-        pick : pandas.DataFrame
-            the newly selected target
-        program : str
-            the selected program
-
-        """
-        choices = self.special[program]['choices']
-        tic = pick.tic
-        for i in choices.index.values.tolist():
-            query = self.candidates.query(choices.loc[i,'filter'])
-            if tic in query.tic.values.tolist():
-                choices.loc[i, 'targets_left'] -= 1
-        self.sciences.loc[program, 'n_targets_left'] = np.sum(choices.targets_left.values.tolist())+1
-        self.special[program]['choices'] = choices.copy()
-        self.special[program]['stuck'] = 0
  
 
     def reset_track(self):
         """
         For MC iterations > 1, this module resets all the required information 
-        back to initial starting conditions, primarily a new survey.track to log
-        the new selection process to.
-
-        """
-        self.reset_programs()
-        self.track[self.n][0] = {}
-        for program, hours in zip(self.sciences.index.values.tolist(), self.sciences.remaining_hours.values.tolist()):
-            self.track[self.n][0][program] = round(hours,3)
-        self.track[self.n][0]['total_time'] = round(np.sum(self.sciences.remaining_hours.values.tolist()),3)
-        self.priority = 1
-        self.i = 1
-        np.random.seed(self.seeds[self.n-1])
-
-
-    def reset_programs(self):
-        """
-        For MC iterations > 1, this is used to reset both the starting sample
-        and initial program information (e.g., allocation, etc.).
+        back to initial starting conditions, including the starting sample and
+        and initial program information (e.g., allocation, etc.), as well as a 
+        new survey.track to log the new selection process to.
 
         """
         # make copies of the original dataframes, thus resetting the information
         self.candidates = self.sample.copy()
         self.sciences = self.programs.copy()
-        if self.special != {}:
-            for program in self.special:
-                self.special[program]['stuck'] = 0
-                self.special[program]['pick_number'] = 1
-                choices = self.init_2D_filters(program)
-                self.special[program]['choices'] = choices
+        self.track[self.n][0] = {}
+        for program, hours in zip(self.sciences.index.values.tolist(), self.sciences.remaining_hours.values.tolist()):
+            self.track[self.n][0][program] = round(hours,3)
+        self.track[self.n][0]['total_time'] = round(np.sum(self.sciences.remaining_hours.values.tolist()),3)
+        self.track[self.n][0]['program'] = '--'
+        self.track[self.n][0]['program_pick'] = 0
+        self.track[self.n][0]['overall_priority'] = 0
+        self.track[self.n][0]['toi'] = 0
+        self.track[self.n][0]['tic'] = 0
+        self.priority = 1
+        self.i = 1
+        np.random.seed(self.seeds[self.n-1])
 
 
     def update(self, pick, program):
@@ -520,8 +351,6 @@ class Survey:
             selected target in the survey as well as the internal program priority
 
         """
-        if program in self.special:
-            self.check_2D_overlap(pick, program)
         self.add_program_pick(pick, program)
         self.sciences.loc[program,'n_targets_left'] -= 1
         self.sciences.loc[program,'pick_number'] += 1
