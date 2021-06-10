@@ -45,11 +45,62 @@ $ cd survey
 $ survey setup
 ```
 
-This last command will set up the proper directories and download a couple example files to get you started via command line. Below is a link to a different tutorial if jupyter notebook is more your thing. To run the software, simply execute:
+This last command will set up the proper directories and download a couple example files to get you started via command line. If jupyter notebook is more your thing, feel free to use the additional option with the setup command to also download our notebook tutorial:
+
+```
+$ survey setup -nb
+```
+
+Below is a link to the notebook tutorial if you don't want to run it but feel like taking a peek. To run the software via command line, simply execute:
 
 ```
 $ survey rank
 ```
+
+The verbose command is `True` by default, which should show the following output if you ran the above line:
+
+```
+ ------------------------------
+ -- prioritization  starting --
+ ------------------------------
+
+   - loading sample and survey science information
+   - 785 targets make the standard survey cuts
+   - 242 have also passed various vetting steps
+   - ranking algorithm initialized using 50.0 nights (10.0 hr/n)
+   - algorithm took 53 seconds to run
+   - 85 targets were selected
+   - Making data products, including:
+     - a copy of the updated sample
+     - algorithm history (via ranking steps)
+     - the final prioritized list (via observing priorities)
+     - final costs saved
+     - program overlap
+     - txt file w/ run info
+
+ ------------------------------
+ ----- process - complete -----
+ ------------------------------
+
+Thu 06/10/21 12:03PM
+
+Out of the 86 total targets:
+  - SC1A has 31 targets
+  - SC1B has 30 targets
+  - SC1C has 6 targets
+  - SC1D has 4 targets
+  - SC1E has 4 targets
+  - SC2A has 44 targets
+  - SC2Bi has 5 targets
+  - SC2Bii has 2 targets
+  - SC2C has 4 targets
+  - SC3 has 21 targets
+  - SC4 has 16 targets
+  - TOA has 86 targets
+  - TOB has 8 targets
+```
+
+And now you have our TESS-Keck Survey sample, it's as easy as that!
 
 ## Features
 
