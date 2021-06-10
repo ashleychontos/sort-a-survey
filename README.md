@@ -10,14 +10,7 @@ $ pip install sortasurvey
 ```   
 
 The `survey` binary should have been automatically placed in your system's path by the
-command. If your system can not find the `survey` executable, `cd` into the 
-top-level `sortasurvey` directory and try running the following command:
-
-```
-$ python setup.py install
-```
-
-You may test your installation by using `survey --help` to see available command-line options:
+command. You may test your installation by using `survey --help` to see available command-line options:
 
 ```
 $ survey --help
