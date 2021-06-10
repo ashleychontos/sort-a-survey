@@ -31,7 +31,7 @@ subcommands:
 
 ## Quickstart
 
-Once you've successfully installed the software, we suggest to create a new directory to keep all your survey-related stuff in one place. The package also provides a convenient `setup` feature, so to get started: 
+Once you've successfully installed the software, we suggest to create a new directory to keep all your survey-related stuff in one place. The software package  provides a pretty convenient `setup` feature. Therefore, to get started in your terminal: 
 
 ```
 $ mkdir survey
@@ -39,13 +39,13 @@ $ cd survey
 $ survey setup
 ```
 
-This last command will set up the proper directories and download a couple example files to get you started via command line. If jupyter notebook is more your thing, feel free to use the additional option with the setup command to also download our notebook tutorial:
+This last command will set up the proper directories and download a couple example files to get you started via command line. If jupyter notebook is more your thing, use the notebook option (via `-nb` `--nb` `-notebook` `--notebook`) with the setup command which will also download our notebook tutorial:
 
 ```
 $ survey setup -nb
 ```
 
-Please visit the [notebook tutorial](https://github.com/ashleychontos/sort-a-survey/blob/main/examples/TKS.ipynb) if you don't feel like running it but would like to take a peek (there is pretty plots in there, I promise). To run the software via command line, simply execute:
+Please visit the [notebook tutorial](https://github.com/ashleychontos/sort-a-survey/blob/main/examples/TKS.ipynb) if you don't feel like running it but would like to take a peek (there are pretty plots in there, I promise). To run the software via command line, simply execute:
 
 ```
 $ survey rank
@@ -95,7 +95,7 @@ Out of the 86 total targets:
 
 ```
 
-And now you have our TESS-Keck Survey sample, it's as easy as that! If you'd like to see plots of this sample and/or more verbose output, please check out the [jupyter notebook](https://github.com/ashleychontos/sort-a-survey/blob/main/examples/TKS.ipynb) or the paper by Chontos+2021 that discusses this all in more detail.
+And now you have our TESS-Keck Survey sample, it's as simple as that! If you'd like to see plots of this sample and/or more descriptions of what this all means, please check out the [jupyter notebook](https://github.com/ashleychontos/sort-a-survey/blob/main/examples/TKS.ipynb) or the recent paper by Chontos+2021 that discusses this all in more detail.
 
 ## Features
 
