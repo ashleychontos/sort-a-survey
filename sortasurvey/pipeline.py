@@ -45,16 +45,14 @@ def rank(args, stuck=0):
             # Only continue if the selected program has targets left
             if not survey.sciences.loc[program,'n_targets_left']:
                 continue
-            if program in survey.special:
-                survey.get_2D_filter(program)
             # pick highest priority target not yet selected
             pick = sample.get_highest_priority()
+            if pick is None:
+                continue
             # what is the cost of the selected target
             cost = float((pick.actual_cost))/3600.
             # if the program cannot afford the target, it is "stuck"
             if cost > survey.sciences.loc[program,'remaining_hours']:
-                if program in survey.special:
-                    survey.special[program]['stuck'] += 1
                 stuck += 1
             else:
                 # reset counter

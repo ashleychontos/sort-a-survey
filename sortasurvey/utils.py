@@ -74,10 +74,10 @@ def make_data_products(survey):
                 os.makedirs('%s/%d/'%(survey.path_save,survey.n))
             else:
                 return
-        survey = make_final(survey)
+        survey = make_final_sample(survey)
         survey = make_ranking_steps(survey)
         survey = assign_priorities(survey)
-#    survey = final_costs(survey)
+        survey = final_costs(survey)
         survey = program_overlap(survey)
         get_stats(survey)
 
@@ -98,7 +98,7 @@ def make_directory(survey, i=1):
 
     """
     if survey.verbose and not survey.emcee:
-        print('   - making data products')
+        print('   - Making data products, including:')
     now = datetime.datetime.now()
     name = now.strftime("%m-%d-%y")
     newdir = '%s/%s-%d'%(survey.outdir,name,i)
@@ -113,7 +113,7 @@ def make_directory(survey, i=1):
     return survey
           
   
-def make_final(survey):
+def make_final_sample(survey, cols_to_drop=['select_DG','TSM','SC3_bin_rank','drop','false','n_select']):
     """
     Makes a directory for the output files
 
@@ -128,6 +128,7 @@ def make_final(survey):
         updated Survey class object with the new 'path_save' attribute
 
     """
+    # SC2A has a very different observing approach than a majority of TKS programs
     changes = survey.df.query('in_SC2A == 1 and in_other_programs == 1')
     method = survey.programs.loc['SC2A', 'method']
     for i in changes.index.values.tolist():
@@ -142,6 +143,7 @@ def make_final(survey):
         survey.df.loc[i, "rem_nobs"] = remaining_nobs
         lefttime = observing.cost_function(df_temp, method)
         survey.df.loc[i, "rem_time"] = round(lefttime/3600.,3)
+    # same for SC4 (evolved)
     changes = survey.df.query('in_SC4 == 1 and in_other_programs == 1')
     method = survey.programs.loc['SC4', 'method']
     for i in changes.index.values.tolist():
@@ -156,13 +158,23 @@ def make_final(survey):
         survey.df.loc[i, "rem_nobs"] = remaining_nobs
         lefttime = observing.cost_function(df_temp, method)
         survey.df.loc[i, "rem_time"] = round(lefttime/3600.,3)
+    # we need to also add in our RM targets
+    for target in survey.programs.loc['SC2Bii', 'high_priority']:
+        survey.df.loc[survey.df['toi'] == target,'in_SC2Bii'] = 1
+        if np.isnan(survey.df.loc[survey.df['toi'] == target, 'priority'].values.tolist()[0]):
+            survey.df.loc[survey.df['toi'] == target, 'priority'] = survey.df['priority'].max()+1
+    start = np.array([0]*len(survey.df))
+    for science in survey.programs.index.values.tolist():
+        start += survey.df['in_%s'%science].values.tolist()
+    survey.df['in_other_programs'] = start
+    survey.df.drop(columns=cols_to_drop, errors='ignore', inplace=True)
     if survey.save:
         if survey.emcee:
             survey.df.to_csv('%s/%d/TOIs_perfect_final.csv'%(survey.path_save, survey.n), index=False)
         else:
-            survey.df.to_csv('%s/TOIs_perfect_final.csv'%survey.path_save, index=False)
+            survey.df.to_csv('%s/%s_final.csv'%(survey.path_save, survey.path_sample.split('.')[0]), index=False)
         if survey.verbose and not survey.emcee:
-            print('   - copy of updated sample information saved')
+            print('     - a copy of the updated sample')
     survey.final = survey.df.copy()
     return survey
       
@@ -189,13 +201,30 @@ def make_ranking_steps(survey):
     df = pd.DataFrame(columns = reorder)
     for column in reorder:
         df[column] = track[column]
+    tois = [int(target) for target in df.toi.values.tolist()]
+    idx = len(df)
+    for t, target in enumerate(survey.programs.loc['SC2Bii', 'high_priority']):
+        idx = len(df)
+        df.loc[idx+t,'program'] = 'SC2Bii'
+        df.loc[idx+t,'program_pick'] = t+1
+        df.loc[idx+t,'toi'] = target
+        df.loc[idx+t,'tic'] = survey.df[survey.df['toi'].isin([target])]['tic'].values.tolist()[0]
+        if int(np.floor(target)) not in tois:
+            df.loc[idx+t,'overall_priority'] = int(df['overall_priority'].max()+1)
+        else:
+            new=tois.index(int(np.floor(target)))
+            df.loc[idx+t,'overall_priority'] = df.loc[new,'overall_priority']
+            df.loc[idx+t,'tic'] = df.loc[new,'tic']
+        for program in survey.programs.index.values.tolist():
+            df.loc[idx+t,program] = df.loc[idx-1,program]
+        df.loc[idx+t,'total_time'] = df.loc[idx-1,'total_time']
     if survey.save:
         if survey.emcee:
             df.to_csv('%s/%d/ranking_steps.csv'%(survey.path_save,survey.n))
         else:
             df.to_csv('%s/ranking_steps.csv'%survey.path_save)
         if survey.verbose and not survey.emcee:
-            print('   - algorithm history saved as ranking steps')
+            print('     - algorithm history (via ranking steps)')
     survey.ranking_steps = df.copy()
     return survey
     
@@ -221,7 +250,7 @@ def assign_priorities(survey, obs={}, m=1):
     """
     track_sorted = survey.ranking_steps.sort_values(by = ['overall_priority'])
     for q in list(set(track_sorted.overall_priority.values.tolist())):
-        if not np.isnan(q):
+        if int(q) != 0:
             prior = track_sorted[track_sorted["overall_priority"] == q]
             obs[m] = {}
             obs[m]['tic'] = int(prior.tic.values.tolist()[0])
@@ -237,7 +266,7 @@ def assign_priorities(survey, obs={}, m=1):
         else:
             observed.to_csv('%s/observing_priorities.csv'%survey.path_save, index = False)
         if survey.verbose and not survey.emcee:
-            print('   - final prioritized list saved')
+            print('     - the final prioritized list (via observing priorities)')
     survey.observed = observed.copy()
     return survey
 
@@ -305,7 +334,7 @@ def final_costs(survey, costs={}):
         else:
             df.to_csv('%s/total_costs.csv'%survey.path_save, index=False)
         if survey.verbose and not survey.emcee:
-            print('   - final costs saved')
+            print('     - final costs saved')
     survey.costs = df.copy()
     return survey
         
@@ -345,7 +374,7 @@ def program_overlap(survey):
         else:
             df.to_csv('%s/program_overlap.csv'%survey.path_save, index = False)
         if survey.verbose and not survey.emcee:
-            print('   - program overlap csv saved')
+            print('     - program overlap')
     survey.overlap = df.copy()
     return survey
 
@@ -387,7 +416,7 @@ def emcee_rankings(survey):
         df.loc[i, "other_programs"] = total
     df.to_csv('%s/TOIs_perfect_mc.csv'%survey.path_save)
     if survey.verbose:
-        print('   - spreadsheet containing MC information saved')
+        print('     - spreadsheet containing MC information saved')
     emcee_df = df.copy()
     return emcee_df
           
@@ -415,7 +444,7 @@ def get_stats(survey, note='', output='', finish=False):
     df = survey.overlap.copy()
     time = datetime.datetime.now()
     note += time.strftime("%a %m/%d/%y %I:%M%p") + '\n'
-    output += time.strftime("%a %m/%d/%y %I:%M%p") + '\n'
+    output += time.strftime("%a %m/%d/%y %I:%M%p") + '\n\n'
     note += 'Seed no: %d\n'%survey.seeds[survey.n-1]
     note += 'Out of the %d total targets:\n'%len(df)
     output += 'Out of the %d total targets:\n'%len(df)
@@ -440,9 +469,10 @@ def get_stats(survey, note='', output='', finish=False):
         f.write(note)
         f.close()
         if survey.verbose and not survey.emcee:
-            print('   - txt file containing run information saved')
-            print('')
-            print(' --- process complete ---')
+            print('     - txt file w/ run info')
+            print('\n ------------------------------')
+            print(' ----- process - complete -----')
+            print(' ------------------------------')
             print('')
             print(output)
 

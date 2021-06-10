@@ -14,7 +14,7 @@ def main():
     parser.add_argument('-version', '--version',
                         action='version',
                         version="%(prog)s {}".format(sortasurvey.__version__),
-                        help="Print version number and exit."
+                        help="Print version number and exit"
     )
 
     # In the parent parser, we define arguments and options common to all subcommands
@@ -35,7 +35,6 @@ def main():
                                dest='path_ignore',
                                help='Path to save results to',
                                default='%s/no_no.csv'%INPDIR,
-                               type=str,
     )
     parent_parser.add_argument('-out', '--out', '-outdir', '--outdir', '-output', '--output',
                                dest='outdir',
@@ -47,12 +46,11 @@ def main():
                                dest='path_priority',
                                help='Path to main planet sample to select from',
                                default='%s/high_priority.csv'%INPDIR, 
-                               type=str,
     )
     parent_parser.add_argument('-sample', '--sample','-samples', '--samples',
                                dest='path_sample',
                                help='Path to main planet sample to select from',
-                               default='%s/TOIs_perfect.csv'%INPDIR, 
+                               default='%s/TKS_sample.csv'%INPDIR, 
                                type=str,
     )
     parent_parser.add_argument('-verbose', '--verbose',
@@ -62,14 +60,14 @@ def main():
                                action='store_false',
     )
 
-    sub_parser = parser.add_subparsers(title='subcommands', dest='subcommand')
+    sub_parser = parser.add_subparsers(title='Pipeline options:', dest='subcommand')
 
     # Setting up
     parser_setup = sub_parser.add_parser('setup', help='Easy setup for directories and files',
                                          parents=[parent_parser])
     parser_setup.set_defaults(func=pipeline.setup)
 
-    # Running pySYD in regular mode
+    # Run ranking algorith
 
     parser_run = sub_parser.add_parser('rank', help='Rank targets for a given survey', 
                                        parents=[parent_parser])
@@ -102,13 +100,6 @@ def main():
                             help='Turn off the saving of output data products and figures (default=True)',
                             default=True, 
                             action='store_false',
-    )
-    parser_run.add_argument('-sp', '--sp', '-special', '--special',
-                            dest='special',
-                            help='For TKS, this is for a more complicated, 2D selection process',
-                            nargs='*',
-                            type=str,
-                            default=None,
     )
 
     parser_run.set_defaults(func=pipeline.rank)

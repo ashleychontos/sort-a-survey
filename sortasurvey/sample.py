@@ -83,7 +83,7 @@ class Sample:
         self.query = query.copy()
         
 
-    def get_highest_priority(self):
+    def get_highest_priority(self, pick=None):
         """
         Returns the highest priority target for a selected program that has not
         yet been selected by that program.
@@ -139,6 +139,8 @@ class Sample:
         ----------
         final_path : Optional[str]
             path of output csv file to read in
+
+        
 
         Returns
         -------

@@ -9,7 +9,6 @@ def cost_function(df, method, include_archival=True, overhead=2.*60, lower=3.*60
     """
     Estimates the total amount of time needed on sky for a given target, which 
     is highly dependent on the instrument using to collect the data
-    PLEASE NOTE: this might need to be adjusted for other surveys
 
     Parameters
     ----------
