@@ -35,6 +35,20 @@ subcommands:
     rank               Rank targets for a given survey
 ```
 
+## Quickstart
+
+The package provides a convenient `setup` feature: 
+
+```
+$ survey setup
+```
+
+This command will set up the proper directories and download a couple example files to get you started via CLI. Below is a link to a different tutorial if jupyter notebook is more your thing.
+
+```
+$ survey rank
+```
+
 ## Features
 
 Can't converge on a final target list? Do multiple science goals have you tripped up? Are you having a hard time balancing
