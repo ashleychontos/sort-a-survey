@@ -31,14 +31,13 @@ subcommands:
 
 ## Quickstart
 
-Once you've successfully installed the software, we suggest to create a new directory to keep all your survey-related stuff in one place. The software package  provides a pretty convenient `setup` feature. Therefore, to get started in your terminal: 
+Once you've successfully installed the package, we suggest to create a new directory to keep all your survey-related stuff in one place. The software package provides a pretty convenient `setup` feature that we highly recommend. Therefore, to get started in your terminal type: 
 
 ```
 $ mkdir survey
 $ cd survey
 $ survey setup
 ```
-
 This last command will set up the proper directories and download a couple example files to get you started via command line. If jupyter notebook is more your thing, use the notebook option (via `-nb` `--nb` `-notebook` `--notebook`) with the setup command which will also download our notebook tutorial:
 
 ```
