@@ -11,7 +11,7 @@ $ pip install sortasurvey
 ```   
 
 The `survey` binary should have been automatically placed in your system's path by the
-command. You may test your installation by using `survey --help` to see available command-line options:
+command. You can test your installation by using `survey --help` to see available command-line options:
 
 ```
 $ survey --help
