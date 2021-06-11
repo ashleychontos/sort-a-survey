@@ -116,11 +116,10 @@ Imagine a survey sample that can be:
 - *Visualized*
   - creates helpful summary tables and stats
 
-## Tutorial
-
-Follow example in
+## Tutorials
 
 - `sort-a-survey/examples/TKS.ipynb`
+- `sort-a-survey/examples/Sample.ipynb`
 
 -------------------------------------------------------------------------------
 
