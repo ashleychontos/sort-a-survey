@@ -1,6 +1,6 @@
 # sort-a-survey
 #### automated, optimizable & reproducible target selection algorithm for large astronomical surveys <br>
-[![PyPI](https://badge.fury.io/py/sortasurvey.svg)](https://badge.fury.io/py/sortasurvey)
+[![PyPI version](https://badge.fury.io/py/sortasurvey.svg)](https://badge.fury.io/py/sortasurvey)
 
 ## Installation
 
