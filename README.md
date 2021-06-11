@@ -39,7 +39,7 @@ $ mkdir survey
 $ cd survey
 $ survey setup
 ```
-This last command will set up the proper directories and download a couple example files to get you started via command line. If jupyter notebook is more your thing, use the notebook option (via `-nb` `--nb` `-notebook` `--notebook`) with the setup command which will also download our notebook tutorial:
+This last command will set up the proper directories and download a couple of example files to get you started via command line. If jupyter notebook is more your thing, use the notebook option (via `-nb` `--nb` `-notebook` `--notebook`) with the setup command which will also download our notebook tutorial:
 
 ```
 $ survey setup -nb
@@ -51,7 +51,7 @@ Please visit the [notebook tutorial](https://github.com/ashleychontos/sort-a-sur
 $ survey rank
 ```
 
-The verbose command is `True` by default, which should show the following output if you ran the above line:
+The optional `-verbose` command is `True` by default, which should show the following output (if you ran the above command):
 
 ```
  ------------------------------
