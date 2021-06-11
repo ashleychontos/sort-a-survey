@@ -3,9 +3,7 @@ import glob
 import numpy as np
 import pandas as pd
 
-
 from sortasurvey import observing
-from sortasurvey import OUTDIR
 
 
 class Sample:
@@ -126,7 +124,7 @@ class Sample:
 
         """
         if final_path is None:
-            list_of_files = glob.glob('%s/*/TKS_sample_final.csv'%OUTDIR)
+            list_of_files = glob.glob('results/*/TKS_sample_final.csv')
             latest_file = max(list_of_files, key=os.path.getctime)
         else:
             latest_file = final_path
@@ -151,7 +149,7 @@ class Sample:
 
         """
         if final_path is None:
-            list_of_files = glob.glob('%s/*/TKS_sample_final.csv'%OUTDIR)
+            list_of_files = glob.glob('results/*/TKS_sample_final.csv')
             latest_file = max(list_of_files, key=os.path.getctime)
         else:
             latest_file = final_path
