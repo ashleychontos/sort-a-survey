@@ -109,7 +109,7 @@ def make_directory(survey, i=1):
           
   
 def make_final_sample(survey, special=["SC2A", "SC4", "SC2Bii"], 
-                      cols_to_drop=['select_DG','TSM','SC3_bin_rank','drop','false','n_select']):
+                      cols_to_drop=['select_DG','TSM','SC3_bin_rank','drop','finish','false','n_select']):
     """
     Makes a directory for the output files
 

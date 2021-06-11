@@ -5,6 +5,7 @@ import pandas as pd
 
 
 from sortasurvey import observing
+from sortasurvey import OUTDIR
 
 
 class Sample:
@@ -36,7 +37,7 @@ class Sample:
 
     """
 
-    def __init__(self, program, survey=None, path_init='info/TOIs_perfect.csv', path_final=None):
+    def __init__(self, program, survey=None, path_init='info/TKS_sample.csv', path_final=None):
         self.path_init = path_init
         self.program = program
         if survey is not None:
@@ -108,7 +109,7 @@ class Sample:
         return pick
 
 
-    def get_vetted_sample(self):
+    def get_vetted_sample(self, final_path=None):
         """
         Loads the vetted sample that was available during the survey selection process.
         Using the final csv path, it selects the sample from the most recent output directory.
@@ -124,8 +125,11 @@ class Sample:
             the full vetted sample used for the target selection
 
         """
-        list_of_files = glob.glob(self.final_path)
-        latest_file = max(list_of_files, key=os.path.getctime)
+        if final_path is None:
+            list_of_files = glob.glob('%s/*/TKS_sample_final.csv'%OUTDIR)
+            latest_file = max(list_of_files, key=os.path.getctime)
+        else:
+            latest_file = final_path
         df = pd.read_csv(latest_file)
         return df
 
@@ -140,8 +144,6 @@ class Sample:
         final_path : Optional[str]
             path of output csv file to read in
 
-        
-
         Returns
         -------
         df : pandas.DataFrame
@@ -149,7 +151,7 @@ class Sample:
 
         """
         if final_path is None:
-            list_of_files = glob.glob('results/other/*/*/TOIs_perfect_final.csv')
+            list_of_files = glob.glob('%s/*/TKS_sample_final.csv'%OUTDIR)
             latest_file = max(list_of_files, key=os.path.getctime)
         else:
             latest_file = final_path

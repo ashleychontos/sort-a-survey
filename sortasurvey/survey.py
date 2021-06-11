@@ -69,6 +69,8 @@ class Survey:
                 self.pbar = tqdm(total=self.iter)
         else:
             self.emcee = False
+        self.candidates = self.sample.copy()
+        self.sciences = self.programs.copy()
 
 
     def get_sample(self, args, dec=-30., ruwe=2.):
