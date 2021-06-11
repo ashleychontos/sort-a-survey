@@ -51,7 +51,7 @@ Please visit the [notebook tutorial](https://github.com/ashleychontos/sort-a-sur
 $ survey rank
 ```
 
-The verbose command is `True` by default, which should show the following output (if you ran the above command):
+The optional `-verbose` command is `True` by default, which should show the following output (if you ran the above command):
 
 ```
  ------------------------------
