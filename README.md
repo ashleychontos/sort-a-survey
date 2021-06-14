@@ -95,7 +95,7 @@ Out of the 86 total targets:
 
 ```
 
-And now you have our TESS-Keck Survey sample, it's as simple as that! If you'd like to see plots of this sample and/or more descriptions of what this all means, please check out the [jupyter notebook](https://github.com/ashleychontos/sort-a-survey/blob/main/examples/TKS.ipynb) or the recent paper by Chontos+2021 that discusses this all in more detail.
+And now you have our TESS-Keck Survey sample, it's as simple as that! If you'd like to see plots of this sample and/or more descriptions of what this all means, please check out the [jupyter notebook](https://github.com/ashleychontos/sort-a-survey/blob/main/examples/TKS.ipynb) or our recent paper ([Chontos+2021](https://arxiv.org/abs/2106.06156)) that discusses this all in more detail.
 
 ## Features
 
@@ -136,7 +136,7 @@ this algorithm to the final TKS sample.
 Written by Ashley Chontos, with contributions from BJ Fulton, Erik Petigura, Joey Murphy, Ryan Rubenzahl, Sarah Blunt,
 Corey Beard, Tara Fetherolf, and Judah van Zandt.
 
-Please cite the [TKS paper] if you make 
+Please cite the [TKS paper](https://arxiv.org/abs/2106.06156) if you make 
 use of this software or the TKS sample in your work.
 
 ## Acknowledgements
