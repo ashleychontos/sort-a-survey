@@ -8,34 +8,6 @@ pd.set_option('mode.chained_assignment', None)
 from sortasurvey import observing
 
 
-def pick_program(programs):
-    """
-    Given a set of programs, selects a program randomly based on the proportional time remaining 
-    for each program in a Survey. This is done by creating a cumulative distribution function (CDF) 
-    using all programs "remaining_hours", normalizing by the total remaining time (Ttot), then draws 
-    a random number from U~[0,1), which then maps back to the list of programs.
-
-    Parameters
-    ----------
-    programs : dict
-        program dictionary of Survey object (must have 'remaining_hours' as a key for each program)
-
-    Returns
-    -------
-    program : str
-        the selected program which comes directly from the input programs dict keys
-
-    """
-    cdf = list(np.cumsum(programs.remaining_hours.values.tolist())/np.sum(programs.remaining_hours.values.tolist()))
-    cdf.insert(0, 0.)
-    pick = np.random.random()
-    for i in range(len(cdf)-1):
-        if cdf[i] < pick and cdf[i+1] > pick:
-            break
-    program = programs.index.values.tolist()[i]
-    return program
-
-
 def make_data_products(survey):
     """
     After target selection process is complete, information is saved to several csvs.
@@ -74,7 +46,7 @@ def make_data_products(survey):
         survey = make_final_sample(survey)
         survey = make_ranking_steps(survey)
         survey = assign_priorities(survey)
-        survey = final_costs(survey)
+#        survey = final_costs(survey)
         survey = program_overlap(survey)
         get_stats(survey)
 

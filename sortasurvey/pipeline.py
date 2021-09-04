@@ -39,14 +39,11 @@ def rank(args, stuck=0):
         # Begin selection process 
         while np.sum(survey.sciences.remaining_hours.values.tolist()) > 0.:
             # Select program
-            program = utils.pick_program(survey.sciences)
+            survey.pick_program()
             # Create an instance of the Sample class w/ the updated vetted sample
-            sample = Sample(program, survey=survey)
-            # Only continue if the selected program has targets left
-            if not survey.sciences.loc[program,'n_targets_left']:
-                continue
+            s = Sample(survey, program)
             # pick highest priority target not yet selected
-            pick = sample.get_highest_priority()
+            pick = s(program)
             if pick is None:
                 continue
             # what is the cost of the selected target

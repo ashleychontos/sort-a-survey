@@ -3,7 +3,7 @@ import glob
 import numpy as np
 import pandas as pd
 
-from sortasurvey import observing
+from sortasurvey.observing import Instrument
 
 
 class Sample:
@@ -35,13 +35,23 @@ class Sample:
 
     """
 
-    def __init__(self, program, survey=None, path_init='info/TKS_sample.csv', path_final=None):
-        self.path_init = path_init
-        self.program = program
-        if survey is not None:
-            self.df = survey.candidates.copy()
-            self.programs = survey.sciences.copy()
-            self.get_vetted_science(program)
+    def __init__(self, survey):
+        self.df = survey.candidates.copy()
+        self.programs = survey.sciences.copy()
+        self.program = survey.program
+        self.instrument = Instrument(survey)
+        self.get_vetted_science()
+
+
+    def __call__(self):
+        self.get_highest_priority()
+        if self.pick is not None:
+            cost = float((self.pick.actual_cost))/3600.
+            if cost > self.programs.loc[self.program,'remaining_hours']:
+                return True
+            else:
+                return False
+        return True
 
 
     def get_vetted_science(self, drop_dup=True):
@@ -63,23 +73,54 @@ class Sample:
             option to drop duplicate targets in the sample query, since the target will only be observed once. As a result, the default is `True`.
 
         """
-        if not hasattr(self, 'df'):
-            self.df = pd.read_csv(self.path_init)
-        query = self.df.query(self.programs.loc[self.program,'filter'])
+        self.query = self.df.query(self.programs.loc[self.program,'filter'])
         if drop_dup:
-            query = query.drop_duplicates(subset='tic')
-        query = observing.get_actual_costs(self.program, self.programs, query)
-        query = query.sort_values(by=self.programs.loc[self.program,'prioritize_by'], ascending=self.programs.loc[self.program,'ascending_by'])
+            self.query = self.query.drop_duplicates(subset='tic')
+        self.get_current_costs()
+        self.query_copy = self.query.sort_values(by=self.programs.loc[self.program,'prioritize_by'], ascending=self.programs.loc[self.program,'ascending_by'])
         if self.programs.loc[self.program,'high_priority'] != []:
-            top = pd.DataFrame(columns = query.columns.values.tolist())
+            top = pd.DataFrame(columns=self.query.columns.values.tolist())
             for toi in self.programs.loc[self.program,'high_priority']:
-                new_filter = 'toi == %.2f'%toi
-                new = self.df.query(new_filter)
-                new = observing.get_actual_costs(self.program, self.programs, new)
-                top = pd.concat([top,new])
-            query = pd.concat([top,query])
-        query.reset_index(drop=True, inplace=True)
-        self.query = query.copy()
+                self.query = self.df.query('toi == %.2f'%toi)
+                self.get_current_costs()
+                top = pd.concat([top,self.query])
+            self.query = pd.concat([top,self.query_copy])
+        self.query.reset_index(drop=True, inplace=True)
+
+
+    def get_current_costs(self, current_costs=[]):
+        """
+        Called during each sampling step to recompute the most up-to-date costs
+        for a given target based on past algorithm selections
+
+        Parameters
+        ----------
+        program : str
+            selected program that is making the selection
+        programs : pandas.DataFrame
+            survey program dataframe
+        query : pandas.DataFrame
+            all targets from the vetted sample relevant for the selected program
+    
+        Returns
+        -------
+        query : pandas.DataFrame
+            the relevant vetted sample updated with actual target costs
+    
+        """
+        for index in self.query.index.values.tolist():
+            costs = []
+            teff, vmag, template, nobs = self.query.loc[idx, 'teff'], self.query.loc[idx,'vmag'], self.query.loc[idx,'template'], self.query.loc[idx,'nobs']
+            for science in self.programs.index.values.tolist():
+                if self.query.loc[index,'in_%s'%science]:
+                    costs.append(self.instrument(teff, vmag, self.programs.loc[science,'method'], template=template, nobs=nobs))
+            costs.append(self.instrument(teff, vmag, self.programs.loc[self.program,'method'], template=template, nobs=nobs))
+            if float(np.sum(costs)) != 0.:
+                fraction = costs[-1]/np.sum(costs)
+                current_costs.append(fraction*max(costs))
+            else:
+                current_costs.append(0.)
+        self.query['actual_cost'] = np.array(current_costs)
         
 
     def get_highest_priority(self, pick=None):
@@ -104,7 +145,53 @@ class Sample:
             if not int(self.query.loc[i,'in_%s'%self.program]):
                 pick = self.query.loc[i]
                 break
-        return pick
+        self.pick = pick
+
+
+    def get_net_costs(self, costs=[], cases=[]):
+        """
+        Based on the selected program's pick, calculates the credit/debit amounts
+        for any program that has selected the same target.
+    
+        Parameters
+        ----------
+        survey : survey.Survey
+            class object containing both the vetted sample (via survey.candidates) and the
+            survey programs (via survey.sciences)
+        pick : pandas.DataFrame
+            a single row dataframe containing information on the selected program's current pick
+        program : str
+            the selected program
+        cases : List[str]
+            other programs that have selected a given target in past iterations
+        costs : List[float]
+            the cost of a target given a specific program's observing strategy
+    
+        Returns
+        -------
+        net : Dict[str,float]
+            a python dictionary whose keys are other programs to credit or debit back, pointing
+            to the amount of time to credit or debit the program back
+
+        """
+        index = self.df.index[self.df['tic'] == int(self.pick.tic)].tolist()[0]
+        teff, vmag, template, nobs = self.df.loc[index,'teff'], self.df.loc[index,'vmag'], self.df.loc[index,'template'], self.df.loc[index,'nobs']
+        for science in self.programs.index.values.tolist():
+            if self.pick['in_%s'%science]:
+                cases.append(science)
+                costs.append(self.instrument(teff, vmag, self.programs.loc[science]['method'], template=template, nobs=nobs))
+        cases.append(self.program)
+        if float(np.sum(costs)) == 0.:
+            net_costs = -1.*np.zeros(len(cases))
+        else:
+            frac = costs/np.sum(costs)
+            old_costs = list((max(costs)/3600.)*frac)
+            old_costs.append(0)
+            costs.append(self.instrument(teff, vmag, self.programs.loc[self.program]['method'], template=template, nobs=nobs))
+            new_frac = costs/np.sum(costs)
+            new_costs = np.array((max(costs)/3600.)*new_frac)
+            net_costs = -1.*(new_costs - np.array(old_costs))
+        return dict(zip(cases,net_costs))
 
 
     def get_vetted_sample(self, final_path=None):
